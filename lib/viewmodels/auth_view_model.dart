@@ -27,6 +27,8 @@ class AuthViewModel extends ChangeNotifier {
 
   bool get isAnonymous => _user?.isAnonymous ?? true;
 
+  bool get isEmailVerified => _user?.emailVerified ?? false;
+
   bool get isProcessing => _isProcessing;
 
   String? get errorMessage => _errorMessage;
@@ -35,7 +37,7 @@ class AuthViewModel extends ChangeNotifier {
     required String email,
     required String password,
   }) async {
-    return _runAuthOperation(
+    return _runUserOperation(
       operation: () => _authService.linkAnonymousWithEmailPassword(
         email: email.trim(),
         password: password,
@@ -43,8 +45,11 @@ class AuthViewModel extends ChangeNotifier {
     );
   }
 
-  Future<bool> signIn({required String email, required String password}) async {
-    return _runAuthOperation(
+  Future<bool> signIn({
+    required String email,
+    required String password,
+  }) async {
+    return _runUserOperation(
       operation: () => _authService.signInWithEmailPassword(
         email: email.trim(),
         password: password,
@@ -53,7 +58,60 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   Future<bool> signOutToGuest() async {
-    return _runAuthOperation(operation: _authService.signOutToAnonymous);
+    return _runUserOperation(
+      operation: _authService.signOutToAnonymous,
+    );
+  }
+
+  Future<bool> sendVerificationEmail() async {
+    if (isAnonymous || isEmailVerified) {
+      return false;
+    }
+
+    return _runVoidOperation(
+      operation: _authService.sendEmailVerification,
+      fallbackErrorMessage: 'Unable to send the verification email.',
+    );
+  }
+
+  Future<bool> refreshUser() async {
+    return _runUserOperation(
+      operation: _authService.reloadCurrentUser,
+      fallbackErrorMessage: 'Unable to refresh your account status.',
+    );
+  }
+
+  Future<bool> sendPasswordReset({
+    required String email,
+  }) async {
+    if (_isProcessing) {
+      return false;
+    }
+
+    _beginOperation();
+
+    try {
+      await _authService.sendPasswordResetEmail(
+        email: email.trim(),
+      );
+      return true;
+    } on FirebaseAuthException catch (error, stackTrace) {
+      if (error.code == 'user-not-found') {
+        return true;
+      }
+
+      _handleFirebaseAuthError(error, stackTrace);
+      return false;
+    } catch (error, stackTrace) {
+      _errorMessage = 'Unable to send the password reset email.';
+
+      debugPrint('Authentication operation failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      return false;
+    } finally {
+      _finishOperation();
+    }
   }
 
   void clearError() {
@@ -65,39 +123,82 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> _runAuthOperation({
+  Future<bool> _runUserOperation({
     required Future<User> Function() operation,
+    String fallbackErrorMessage = 'Something went wrong. Please try again.',
   }) async {
     if (_isProcessing) {
       return false;
     }
 
-    _isProcessing = true;
-    _errorMessage = null;
-    notifyListeners();
+    _beginOperation();
 
     try {
       final user = await operation();
       _user = user;
       return true;
     } on FirebaseAuthException catch (error, stackTrace) {
-      _errorMessage = _messageForFirebaseAuthError(error);
-
-      debugPrint('Authentication operation failed: ${error.code}');
-      debugPrintStack(stackTrace: stackTrace);
-
+      _handleFirebaseAuthError(error, stackTrace);
       return false;
     } catch (error, stackTrace) {
-      _errorMessage = 'Something went wrong. Please try again.';
+      _errorMessage = fallbackErrorMessage;
 
       debugPrint('Authentication operation failed: $error');
       debugPrintStack(stackTrace: stackTrace);
 
       return false;
     } finally {
-      _isProcessing = false;
-      notifyListeners();
+      _finishOperation();
     }
+  }
+
+  Future<bool> _runVoidOperation({
+    required Future<void> Function() operation,
+    required String fallbackErrorMessage,
+  }) async {
+    if (_isProcessing) {
+      return false;
+    }
+
+    _beginOperation();
+
+    try {
+      await operation();
+      return true;
+    } on FirebaseAuthException catch (error, stackTrace) {
+      _handleFirebaseAuthError(error, stackTrace);
+      return false;
+    } catch (error, stackTrace) {
+      _errorMessage = fallbackErrorMessage;
+
+      debugPrint('Authentication operation failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      return false;
+    } finally {
+      _finishOperation();
+    }
+  }
+
+  void _beginOperation() {
+    _isProcessing = true;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void _finishOperation() {
+    _isProcessing = false;
+    notifyListeners();
+  }
+
+  void _handleFirebaseAuthError(
+    FirebaseAuthException error,
+    StackTrace stackTrace,
+  ) {
+    _errorMessage = _messageForFirebaseAuthError(error);
+
+    debugPrint('Authentication operation failed: ${error.code}');
+    debugPrintStack(stackTrace: stackTrace);
   }
 
   String _messageForFirebaseAuthError(FirebaseAuthException error) {
@@ -106,9 +207,8 @@ class AuthViewModel extends ChangeNotifier {
       'weak-password' => 'Please choose a stronger password.',
       'email-already-in-use' || 'credential-already-in-use' =>
         'An account already exists with this email. Try signing in instead.',
-      'user-not-found' ||
-      'wrong-password' ||
-      'invalid-credential' => 'The email or password is incorrect.',
+      'user-not-found' || 'wrong-password' || 'invalid-credential' =>
+        'The email or password is incorrect.',
       'user-disabled' => 'This account has been disabled.',
       'too-many-requests' =>
         'Too many attempts. Please wait a moment and try again.',

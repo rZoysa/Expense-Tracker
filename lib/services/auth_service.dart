@@ -74,6 +74,50 @@ class AuthService {
     return user;
   }
 
+  Future<void> sendEmailVerification() async {
+    final user = _firebaseAuth.currentUser;
+
+    if (user == null) {
+      throw StateError('No authenticated user is available.');
+    }
+
+    if (user.isAnonymous || user.email == null) {
+      throw StateError('Email verification requires a permanent account.');
+    }
+
+    if (user.emailVerified) {
+      return;
+    }
+
+    await user.sendEmailVerification();
+  }
+
+  Future<User> reloadCurrentUser() async {
+    final user = _firebaseAuth.currentUser;
+
+    if (user == null) {
+      throw StateError('No authenticated user is available.');
+    }
+
+    await user.reload();
+
+    final refreshedUser = _firebaseAuth.currentUser;
+
+    if (refreshedUser == null) {
+      throw StateError('Unable to refresh the current user.');
+    }
+
+    return refreshedUser;
+  }
+
+  Future<void> sendPasswordResetEmail({
+    required String email,
+  }) async {
+    await _firebaseAuth.sendPasswordResetEmail(
+      email: email.trim(),
+    );
+  }
+
   Future<User> signOutToAnonymous() async {
     await _firebaseAuth.signOut();
     return signInAnonymouslyIfNeeded();

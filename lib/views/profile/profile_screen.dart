@@ -7,12 +7,17 @@ import 'package:provider/provider.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  Future<void> _openAuthForm(BuildContext context, AuthFormMode mode) async {
+  Future<void> _openAuthForm(
+    BuildContext context,
+    AuthFormMode mode,
+  ) async {
     context.read<AuthViewModel>().clearError();
 
-    final wasSuccessful = await Navigator.of(
-      context,
-    ).push<bool>(MaterialPageRoute(builder: (_) => AuthFormScreen(mode: mode)));
+    final wasSuccessful = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AuthFormScreen(mode: mode),
+      ),
+    );
 
     if (!context.mounted || wasSuccessful != true) {
       return;
@@ -59,7 +64,8 @@ class ProfileScreen extends StatelessWidget {
       return;
     }
 
-    final wasSuccessful = await context.read<AuthViewModel>().signOutToGuest();
+    final wasSuccessful =
+        await context.read<AuthViewModel>().signOutToGuest();
 
     if (!context.mounted) {
       return;
@@ -77,6 +83,56 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _sendVerificationEmail(BuildContext context) async {
+    final authViewModel = context.read<AuthViewModel>();
+    authViewModel.clearError();
+
+    final wasSent = await authViewModel.sendVerificationEmail();
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (wasSent) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text(
+              'Verification email sent to ${authViewModel.email ?? 'your email address'}.',
+            ),
+          ),
+        );
+    }
+  }
+
+  Future<void> _refreshVerificationStatus(BuildContext context) async {
+    final authViewModel = context.read<AuthViewModel>();
+    authViewModel.clearError();
+
+    final wasRefreshed = await authViewModel.refreshUser();
+
+    if (!context.mounted || !wasRefreshed) {
+      return;
+    }
+
+    final isVerified = context.read<AuthViewModel>().isEmailVerified;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            isVerified
+                ? 'Email verified successfully.'
+                : 'Your email is still not verified.',
+          ),
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authViewModel = context.watch<AuthViewModel>();
@@ -87,13 +143,23 @@ class ProfileScreen extends StatelessWidget {
         child: authViewModel.isAnonymous
             ? _GuestProfile(
                 isProcessing: authViewModel.isProcessing,
-                onCreateAccount: () =>
-                    _openAuthForm(context, AuthFormMode.createAccount),
-                onSignIn: () => _openAuthForm(context, AuthFormMode.signIn),
+                onCreateAccount: () => _openAuthForm(
+                  context,
+                  AuthFormMode.createAccount,
+                ),
+                onSignIn: () => _openAuthForm(
+                  context,
+                  AuthFormMode.signIn,
+                ),
               )
             : _SignedInProfile(
                 email: authViewModel.email,
+                isEmailVerified: authViewModel.isEmailVerified,
                 isProcessing: authViewModel.isProcessing,
+                errorMessage: authViewModel.errorMessage,
+                onSendVerification: () => _sendVerificationEmail(context),
+                onRefreshVerification: () =>
+                    _refreshVerificationStatus(context),
                 onSignOut: () => _signOut(context),
               ),
       ),
@@ -135,8 +201,9 @@ class _GuestProfile extends StatelessWidget {
                   SizedBox(height: 16.h),
                   Text(
                     'Guest account',
-                    style: Theme.of(context).textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   SizedBox(height: 8.h),
                   Text(
@@ -151,8 +218,9 @@ class _GuestProfile extends StatelessWidget {
           SizedBox(height: 24.h),
           Text(
             'Account',
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
           SizedBox(height: 12.h),
           FilledButton.icon(
@@ -180,12 +248,20 @@ class _GuestProfile extends StatelessWidget {
 class _SignedInProfile extends StatelessWidget {
   const _SignedInProfile({
     required this.email,
+    required this.isEmailVerified,
     required this.isProcessing,
+    required this.errorMessage,
+    required this.onSendVerification,
+    required this.onRefreshVerification,
     required this.onSignOut,
   });
 
   final String? email;
+  final bool isEmailVerified;
   final bool isProcessing;
+  final String? errorMessage;
+  final VoidCallback onSendVerification;
+  final VoidCallback onRefreshVerification;
   final VoidCallback onSignOut;
 
   @override
@@ -212,8 +288,9 @@ class _SignedInProfile extends StatelessWidget {
                   Text(
                     email ?? 'Signed-in account',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   SizedBox(height: 8.h),
                   Text(
@@ -228,8 +305,9 @@ class _SignedInProfile extends StatelessWidget {
           SizedBox(height: 24.h),
           Text(
             'Account details',
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
           SizedBox(height: 8.h),
           ListTile(
@@ -239,6 +317,70 @@ class _SignedInProfile extends StatelessWidget {
             subtitle: Text(email ?? 'Not available'),
           ),
           const Divider(),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              isEmailVerified
+                  ? Icons.verified_outlined
+                  : Icons.mark_email_unread_outlined,
+            ),
+            title: const Text('Email verification'),
+            subtitle: Text(
+              isEmailVerified ? 'Verified' : 'Not verified',
+            ),
+            trailing: Icon(
+              isEmailVerified
+                  ? Icons.check_circle_outline
+                  : Icons.warning_amber_outlined,
+              color: isEmailVerified
+                  ? colorScheme.primary
+                  : colorScheme.error,
+            ),
+          ),
+          if (!isEmailVerified) ...[
+            SizedBox(height: 8.h),
+            Container(
+              padding: EdgeInsets.all(14.w),
+              decoration: BoxDecoration(
+                color: colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Text(
+                'Verify your email to confirm that you own this address. Expense tracking remains available while verification is pending.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ),
+            SizedBox(height: 12.h),
+            FilledButton.tonalIcon(
+              onPressed: isProcessing ? null : onSendVerification,
+              icon: const Icon(Icons.outgoing_mail),
+              label: const Text('Send Verification Email'),
+            ),
+            SizedBox(height: 8.h),
+            TextButton.icon(
+              onPressed: isProcessing ? null : onRefreshVerification,
+              icon: const Icon(Icons.refresh),
+              label: const Text('I Have Verified My Email'),
+            ),
+          ],
+          if (errorMessage != null) ...[
+            SizedBox(height: 12.h),
+            Container(
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Text(
+                errorMessage!,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onErrorContainer,
+                ),
+              ),
+            ),
+          ],
           SizedBox(height: 16.h),
           OutlinedButton.icon(
             onPressed: isProcessing ? null : onSignOut,

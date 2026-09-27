@@ -1,4 +1,5 @@
 import 'package:expense_tracker/viewmodels/auth_view_model.dart';
+import 'package:expense_tracker/views/profile/password_reset_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -71,6 +72,37 @@ class _AuthFormScreenState extends State<AuthFormScreen> {
     }
 
     return null;
+  }
+
+  Future<void> _openPasswordReset() async {
+    final authViewModel = context.read<AuthViewModel>();
+    authViewModel.clearError();
+
+    final wasSent = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) =>
+            PasswordResetScreen(initialEmail: _emailController.text.trim()),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    authViewModel.clearError();
+
+    if (wasSent == true) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text(
+              'If an account exists for that email, a password reset link has been sent.',
+            ),
+          ),
+        );
+    }
   }
 
   Future<void> _submit() async {
@@ -219,6 +251,17 @@ class _AuthFormScreenState extends State<AuthFormScreen> {
                       ? null
                       : (_) => _submit(),
                 ),
+                if (!_isCreatingAccount) ...[
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: authViewModel.isProcessing
+                          ? null
+                          : _openPasswordReset,
+                      child: const Text('Forgot password?'),
+                    ),
+                  ),
+                ],
                 if (_isCreatingAccount) ...[
                   SizedBox(height: 16.h),
                   TextFormField(
