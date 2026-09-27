@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:expense_tracker/models/category_expense_summary.dart';
 import 'package:expense_tracker/models/expense_category.dart';
 import 'package:flutter/material.dart';
 
@@ -79,6 +80,30 @@ class ExpenseListViewModel extends ChangeNotifier {
     return _expenses
         .where((expense) => DateUtils.isSameMonth(expense.date, _selectedMonth))
         .fold(0.0, (total, expense) => total + expense.amount);
+  }
+
+  List<CategoryExpenseSummary> get categorySummary {
+    final totalsByCategory = <ExpenseCategory, double>{};
+
+    for (final expense in selectedMonthExpenses) {
+      totalsByCategory.update(
+        expense.category,
+        (currentTotal) => currentTotal + expense.amount,
+        ifAbsent: () => expense.amount,
+      );
+    }
+
+    final summaries = totalsByCategory.entries
+        .map(
+          (entry) => CategoryExpenseSummary(
+            category: entry.key,
+            total: entry.value,
+          ),
+        )
+        .toList()
+      ..sort((first, second) => second.total.compareTo(first.total));
+
+    return List.unmodifiable(summaries);
   }
 
   void _watchExpenses() {

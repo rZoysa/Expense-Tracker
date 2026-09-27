@@ -305,6 +305,110 @@ void main() {
       expect(viewModel.filteredExpenses, hasLength(2));
     });
 
+    test('groups and sums selected month expenses by category', () {
+      final selectedMonth = viewModel.selectedMonth;
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Lunch',
+          amount: 1000,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 5),
+        ),
+        _expense(
+          id: '2',
+          title: 'Groceries',
+          amount: 2500,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 10),
+        ),
+        _expense(
+          id: '3',
+          title: 'Fuel',
+          amount: 2000,
+          category: ExpenseCategory.transport,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 12),
+        ),
+      ]);
+
+      expect(viewModel.categorySummary, hasLength(2));
+      expect(viewModel.categorySummary[0].category, ExpenseCategory.food);
+      expect(viewModel.categorySummary[0].total, 3500);
+      expect(viewModel.categorySummary[1].category, ExpenseCategory.transport);
+      expect(viewModel.categorySummary[1].total, 2000);
+    });
+
+    test('category summary ignores expenses outside selected month', () {
+      final selectedMonth = viewModel.selectedMonth;
+      final previousMonth = DateTime(
+        selectedMonth.year,
+        selectedMonth.month - 1,
+      );
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Lunch',
+          amount: 1000,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 5),
+        ),
+        _expense(
+          id: '2',
+          title: 'Old Fuel',
+          amount: 5000,
+          category: ExpenseCategory.transport,
+          date: DateTime(previousMonth.year, previousMonth.month, 10),
+        ),
+      ]);
+
+      expect(viewModel.categorySummary, hasLength(1));
+      expect(viewModel.categorySummary.single.category, ExpenseCategory.food);
+      expect(viewModel.categorySummary.single.total, 1000);
+    });
+
+    test('category summary is ordered from highest to lowest spending', () {
+      final selectedMonth = viewModel.selectedMonth;
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Lunch',
+          amount: 1000,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 5),
+        ),
+        _expense(
+          id: '2',
+          title: 'Electricity',
+          amount: 8000,
+          category: ExpenseCategory.bills,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 10),
+        ),
+        _expense(
+          id: '3',
+          title: 'Fuel',
+          amount: 4000,
+          category: ExpenseCategory.transport,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 12),
+        ),
+      ]);
+
+      expect(
+        viewModel.categorySummary.map((summary) => summary.category),
+        [
+          ExpenseCategory.bills,
+          ExpenseCategory.transport,
+          ExpenseCategory.food,
+        ],
+      );
+    });
+
+    test('category summary is empty when selected month has no expenses', () {
+      expect(viewModel.categorySummary, isEmpty);
+    });
+
     test('switches to previous month', () {
       final now = DateTime.now();
 
