@@ -167,8 +167,8 @@ class _AuthFormScreenState extends State<AuthFormScreen> {
                 SizedBox(height: 8.h),
                 Text(
                   _isCreatingAccount
-                      ? 'Your guest account will be upgraded to email/password sign-in without changing your Firebase user ID.'
-                      : 'Sign in to access the expenses saved under your existing account.',
+                      ? 'Create an account to keep the expenses you\'ve already added and access them on other devices.'
+                      : 'Sign in to view the expenses saved to your account and access them across devices.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
@@ -191,7 +191,7 @@ class _AuthFormScreenState extends State<AuthFormScreen> {
                         SizedBox(width: 10.w),
                         Expanded(
                           child: Text(
-                            'Signing into an existing account switches away from this guest session. Guest expenses are not merged automatically.',
+                            'You\'re currently using guest mode. Signing in to another account will show that account\'s expenses instead. Expenses added as a guest won\'t be moved automatically.',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: colorScheme.onSecondaryContainer,

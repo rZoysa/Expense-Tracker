@@ -40,7 +40,7 @@ class ProfileScreen extends StatelessWidget {
         return AlertDialog(
           title: const Text('Sign out?'),
           content: const Text(
-            'You will continue with a new guest session. Sign in again later to access the expenses saved to this account.',
+            'You\'ll switch back to guest mode on this device. Sign in again anytime to return to your saved expenses.',
           ),
           actions: [
             TextButton(
@@ -72,7 +72,7 @@ class ProfileScreen extends StatelessWidget {
         ..showSnackBar(
           const SnackBar(
             behavior: SnackBarBehavior.floating,
-            content: Text('Signed out. Continuing as guest.'),
+            content: Text('Signed out. You\'re now using guest mode.'),
           ),
         );
     }
@@ -190,13 +190,13 @@ class _GuestProfile extends StatelessWidget {
                   ),
                   SizedBox(height: 16.h),
                   Text(
-                    'Guest account',
+                    'Guest mode',
                     style: Theme.of(context).textTheme.titleLarge
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    'You can use the full expense tracker without creating an account. Create one when you want to keep access to this guest data across future sessions.',
+                    'Sign in or create an account to access your expenses from any device and keep them when you change phones.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
@@ -224,7 +224,7 @@ class _GuestProfile extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           Text(
-            'Creating an account keeps this guest session and its expenses. Signing into an existing account switches to that account instead.',
+            'Creating an account keeps the expenses you\'ve added here. Signing in to an existing account opens the expenses already saved to that account.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           SizedBox(height: 28.h),
@@ -283,7 +283,7 @@ class _SignedInProfile extends StatelessWidget {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    'Your account is connected to Firebase Authentication.',
+                    'You\'re signed in, so your expenses can stay available across devices.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),

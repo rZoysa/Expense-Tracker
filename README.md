@@ -71,6 +71,7 @@ Firebase-specific data access is kept inside the repository/service layer. ViewM
 - flutter_screenutil
 - fl_chart
 - skeletonizer
+- slide_to_act
 - shared_preferences
 - intl
 

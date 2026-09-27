@@ -6,6 +6,7 @@ import 'package:expense_tracker/viewmodels/expense_form_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:slide_to_act/slide_to_act.dart';
 
 class ExpenseFormScreen extends StatefulWidget {
   const ExpenseFormScreen({super.key, this.expense});
@@ -64,19 +65,51 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
+        final dialogColorScheme = Theme.of(dialogContext).colorScheme;
+
         return AlertDialog(
           title: const Text('Delete expense?'),
-          content: const Text(
-            'This expense will be permanently deleted. You can undo it from the transactions screen for a few seconds.',
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'This expense will be deleted. You will have a few seconds to undo it from the transactions screen.',
+              ),
+              SizedBox(height: 20.h),
+              SlideAction(
+                height: 56.h,
+                borderRadius: 18.r,
+                elevation: 0,
+                innerColor: dialogColorScheme.error,
+                outerColor: dialogColorScheme.errorContainer,
+                sliderButtonIcon: Icon(
+                  Icons.delete_forever_outlined,
+                  color: dialogColorScheme.onError,
+                  size: 22.r,
+                ),
+                submittedIcon: Icon(
+                  Icons.check_rounded,
+                  color: dialogColorScheme.onErrorContainer,
+                  size: 22.r,
+                ),
+                child: Text(
+                  'Slide to delete',
+                  style: Theme.of(dialogContext).textTheme.labelLarge?.copyWith(
+                    color: dialogColorScheme.onErrorContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                onSubmit: () {
+                  Navigator.of(dialogContext).pop(true);
+                },
+              ),
+            ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Delete'),
             ),
           ],
         );

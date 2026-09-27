@@ -36,7 +36,7 @@ class AppTheme {
           color: colorScheme.onSurface,
           fontWeight: FontWeight.w700,
           letterSpacing: -0.2,
-          fontSize: 20.w
+          fontSize: 20.w,
         ),
         shape: Border(
           bottom: BorderSide(color: colorScheme.outlineVariant, width: 0.6),

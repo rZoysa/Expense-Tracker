@@ -207,10 +207,9 @@ class AuthViewModel extends ChangeNotifier {
       'network-request-failed' =>
         'Unable to connect. Check your internet connection and try again.',
       'operation-not-allowed' =>
-        'Email/password sign-in is not enabled for this Firebase project.',
-      'provider-already-linked' =>
-        'This account is already linked to an email/password sign-in.',
-      _ => 'Authentication failed. Please try again.',
+        'Sign-in is temporarily unavailable. Please try again later.',
+      'provider-already-linked' => 'This account already uses email sign-in.',
+      _ => 'We couldn\'t complete that request. Please try again.',
     };
   }
 

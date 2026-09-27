@@ -43,6 +43,7 @@ dependencies:
   shared_preferences: ^2.5.5
   fl_chart: ^1.2.0
   skeletonizer: ^3.0.0
+  slide_to_act: ^2.0.2
 
 dev_dependencies:
   flutter_test:

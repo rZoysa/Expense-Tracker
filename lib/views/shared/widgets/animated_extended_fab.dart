@@ -90,10 +90,7 @@ class _AnimatedExtendedFabState extends State<AnimatedExtendedFab>
             child: Align(
               alignment: Alignment.centerLeft,
               widthFactor: progress,
-              child: Opacity(
-                opacity: progress,
-                child: widget.label,
-              ),
+              child: Opacity(opacity: progress, child: widget.label),
             ),
           ),
         );
