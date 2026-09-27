@@ -167,7 +167,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           labelText: 'Title',
                           hintText: 'e.g. Team lunch',
                           prefixIcon: Icon(Icons.edit_outlined),
-                          border: OutlineInputBorder(),
                         ),
                         validator: (value) {
                           final title = value?.trim() ?? '';
@@ -195,7 +194,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           hintText: '0.00',
                           prefixIcon: Icon(Icons.payments_outlined),
                           prefixText: 'LKR ',
-                          border: OutlineInputBorder(),
                         ),
                         validator: (value) {
                           final input = value?.trim() ?? '';
@@ -231,7 +229,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Category',
                           prefixIcon: Icon(Icons.category_outlined),
-                          border: OutlineInputBorder(),
                         ),
                         items: ExpenseCategory.values
                             .map(
@@ -267,7 +264,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             labelText: 'Date',
                             prefixIcon: Icon(Icons.calendar_today_outlined),
                             suffixIcon: Icon(Icons.chevron_right),
-                            border: OutlineInputBorder(),
                           ),
                           child: Text(
                             MaterialLocalizations.of(context)
@@ -291,7 +287,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     decoration: const InputDecoration(
                       hintText: 'Add an optional note or description',
                       alignLabelWithHint: true,
-                      border: OutlineInputBorder(),
                     ),
                   ),
                 ),

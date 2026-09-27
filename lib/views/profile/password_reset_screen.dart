@@ -103,7 +103,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Email',
                     prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
                   ),
                   validator: _validateEmail,
                   onFieldSubmitted: (_) => _submit(),

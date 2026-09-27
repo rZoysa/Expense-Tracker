@@ -6,6 +6,7 @@ import 'package:expense_tracker/repositories/expense_repository.dart';
 import 'package:expense_tracker/viewmodels/expense_form_view_model.dart';
 import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
 import 'package:expense_tracker/views/expense_form_screen.dart';
+import 'package:expense_tracker/views/shared/widgets/animated_extended_fab.dart';
 import 'package:expense_tracker/views/shared/widgets/empty_state.dart';
 import 'package:expense_tracker/views/shared/widgets/error_state.dart';
 import 'package:expense_tracker/views/shared/widgets/expense_list.dart';
@@ -309,9 +310,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Transactions')),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AnimatedExtendedFab(
         heroTag: 'transactions_add_expense',
         isExtended: _isFabExtended,
+        tooltip: 'Add expense',
         onPressed: () => _openAddExpense(context),
         icon: Icon(Icons.add, size: 24.r),
         label: const Text('Add Expense'),

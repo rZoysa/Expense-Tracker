@@ -212,7 +212,6 @@ class _AuthFormScreenState extends State<AuthFormScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Email',
                     prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
                   ),
                   validator: _validateEmail,
                 ),
@@ -230,7 +229,6 @@ class _AuthFormScreenState extends State<AuthFormScreen> {
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       onPressed: authViewModel.isProcessing
                           ? null
@@ -273,7 +271,6 @@ class _AuthFormScreenState extends State<AuthFormScreen> {
                     decoration: InputDecoration(
                       labelText: 'Confirm password',
                       prefixIcon: const Icon(Icons.lock_outline),
-                      border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         onPressed: authViewModel.isProcessing
                             ? null

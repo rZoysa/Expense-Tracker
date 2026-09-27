@@ -115,6 +115,17 @@ Deploy the version-controlled Firestore configuration with:
 firebase deploy --only firestore
 ```
 
+If only the composite indexes changed, deploy just the indexes:
+
+```bash
+firebase deploy --only firestore:indexes
+```
+
+The **All time + category** query requires the composite `expenses` index defined in
+`firestore.indexes.json` (`category ASC`, `date DESC`, document ID DESC). Index
+creation is asynchronous, so wait until its status is **Enabled** in the Firebase
+Console before testing that filter.
+
 ## Setup
 
 ### Prerequisites
