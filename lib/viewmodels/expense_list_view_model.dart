@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:expense_tracker/models/category_expense_summary.dart';
 import 'package:expense_tracker/models/expense_category.dart';
 import 'package:expense_tracker/models/expense_date_scope.dart';
+import 'package:expense_tracker/models/expense_page.dart';
 import 'package:flutter/material.dart';
 
 import '../models/expense.dart';
@@ -10,16 +11,31 @@ import '../repositories/expense_repository.dart';
 
 class ExpenseListViewModel extends ChangeNotifier {
   ExpenseListViewModel({required this._expenseRepository}) {
-    _watchExpenses();
+    _watchSelectedMonthExpenses();
   }
+
+  static const int allTimePageSize = 20;
 
   final ExpenseRepository _expenseRepository;
 
-  StreamSubscription<List<Expense>>? _expenseSubscription;
+  StreamSubscription<List<Expense>>? _monthExpenseSubscription;
+  StreamSubscription<List<Expense>>? _dateExpenseSubscription;
 
-  List<Expense> _expenses = [];
-  bool _isLoading = true;
-  String? _errorMessage;
+  List<Expense> _monthExpenses = [];
+  List<Expense> _specificDateExpenses = [];
+  final List<Expense> _allTimeExpenses = [];
+
+  bool _isMonthLoading = true;
+  bool _isDateLoading = false;
+  bool _isAllTimeLoading = false;
+
+  String? _monthErrorMessage;
+  String? _dateErrorMessage;
+  String? _allTimeErrorMessage;
+
+  ExpensePageCursor? _allTimeCursor;
+  bool _hasMoreAllTime = true;
+  int _allTimeQueryGeneration = 0;
 
   ExpenseCategory? _selectedCategory;
   ExpenseDateScope _dateScope = ExpenseDateScope.month;
@@ -43,15 +59,48 @@ class ExpenseListViewModel extends ChangeNotifier {
 
   DateTime get selectedDate => _selectedDate;
 
-  List<Expense> get expenses => List.unmodifiable(_expenses);
+  /// Expenses loaded by the month-scoped realtime query.
+  List<Expense> get expenses => List.unmodifiable(_monthExpenses);
 
-  bool get isLoading => _isLoading;
+  bool get isLoading => _isMonthLoading;
 
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _monthErrorMessage;
 
-  bool get hasError => _errorMessage != null;
+  bool get hasError => _monthErrorMessage != null;
 
-  bool get isEmpty => !_isLoading && !hasError && _expenses.isEmpty;
+  bool get isEmpty =>
+      !_isMonthLoading && !hasError && selectedMonthExpenses.isEmpty;
+
+  bool get isTransactionsLoading {
+    return switch (_dateScope) {
+      ExpenseDateScope.month => _isMonthLoading,
+      ExpenseDateScope.specificDate => _isDateLoading,
+      ExpenseDateScope.allTime => _isAllTimeLoading && _allTimeExpenses.isEmpty,
+    };
+  }
+
+  String? get transactionsErrorMessage {
+    return switch (_dateScope) {
+      ExpenseDateScope.month => _monthErrorMessage,
+      ExpenseDateScope.specificDate => _dateErrorMessage,
+      ExpenseDateScope.allTime =>
+        _allTimeExpenses.isEmpty ? _allTimeErrorMessage : null,
+    };
+  }
+
+  bool get hasTransactionsError => transactionsErrorMessage != null;
+
+  String? get allTimeLoadMoreErrorMessage =>
+      _allTimeExpenses.isNotEmpty ? _allTimeErrorMessage : null;
+
+  bool get isLoadingMoreAllTime =>
+      _dateScope == ExpenseDateScope.allTime &&
+      _isAllTimeLoading &&
+      _allTimeExpenses.isNotEmpty;
+
+  bool get hasMoreAllTime => _hasMoreAllTime;
+
+  int get loadedAllTimeCount => _allTimeExpenses.length;
 
   bool get isCurrentMonth {
     final now = DateTime.now();
@@ -60,7 +109,7 @@ class ExpenseListViewModel extends ChangeNotifier {
   }
 
   List<Expense> get selectedMonthExpenses {
-    return _expenses
+    return _monthExpenses
         .where((expense) => DateUtils.isSameMonth(expense.date, _selectedMonth))
         .toList();
   }
@@ -73,12 +122,12 @@ class ExpenseListViewModel extends ChangeNotifier {
     return switch (_dateScope) {
       ExpenseDateScope.month => selectedMonthExpenses,
       ExpenseDateScope.specificDate =>
-        _expenses
+        _specificDateExpenses
             .where(
               (expense) => DateUtils.isSameDay(expense.date, _selectedDate),
             )
             .toList(),
-      ExpenseDateScope.allTime => List.of(_expenses),
+      ExpenseDateScope.allTime => List.of(_allTimeExpenses),
     };
   }
 
@@ -101,9 +150,10 @@ class ExpenseListViewModel extends ChangeNotifier {
   }
 
   double get monthlyTotal {
-    return _expenses
-        .where((expense) => DateUtils.isSameMonth(expense.date, _selectedMonth))
-        .fold(0.0, (total, expense) => total + expense.amount);
+    return selectedMonthExpenses.fold(
+      0.0,
+      (total, expense) => total + expense.amount,
+    );
   }
 
   List<CategoryExpenseSummary> get categorySummary {
@@ -131,33 +181,143 @@ class ExpenseListViewModel extends ChangeNotifier {
     return List.unmodifiable(summaries);
   }
 
-  void _watchExpenses() {
-    _isLoading = true;
-    _errorMessage = null;
+  void _watchSelectedMonthExpenses() {
+    _monthExpenseSubscription?.cancel();
 
-    _expenseSubscription = _expenseRepository.watchExpenses().listen(
-      (expenses) {
-        _expenses = expenses;
-        _isLoading = false;
-        _errorMessage = null;
+    _isMonthLoading = true;
+    _monthErrorMessage = null;
+    notifyListeners();
 
+    _monthExpenseSubscription = _expenseRepository
+        .watchExpensesForMonth(_selectedMonth)
+        .listen(
+          (expenses) {
+            _monthExpenses = expenses;
+            _isMonthLoading = false;
+            _monthErrorMessage = null;
+            notifyListeners();
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            _isMonthLoading = false;
+            _monthErrorMessage = 'Unable to load expenses.';
+
+            debugPrint('Failed to load monthly expenses: $error');
+            debugPrintStack(stackTrace: stackTrace);
+            notifyListeners();
+          },
+        );
+  }
+
+  void _watchSelectedDateExpenses() {
+    _dateExpenseSubscription?.cancel();
+
+    _specificDateExpenses = [];
+    _isDateLoading = true;
+    _dateErrorMessage = null;
+    notifyListeners();
+
+    _dateExpenseSubscription = _expenseRepository
+        .watchExpensesForDate(_selectedDate)
+        .listen(
+          (expenses) {
+            _specificDateExpenses = expenses;
+            _isDateLoading = false;
+            _dateErrorMessage = null;
+            notifyListeners();
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            _isDateLoading = false;
+            _dateErrorMessage = 'Unable to load expenses for this date.';
+
+            debugPrint('Failed to load expenses for selected date: $error');
+            debugPrintStack(stackTrace: stackTrace);
+            notifyListeners();
+          },
+        );
+  }
+
+  Future<void> _resetAndLoadAllTime() async {
+    _allTimeQueryGeneration++;
+    _allTimeExpenses.clear();
+    _allTimeCursor = null;
+    _hasMoreAllTime = true;
+    _isAllTimeLoading = false;
+    _allTimeErrorMessage = null;
+    notifyListeners();
+
+    await loadMoreAllTime();
+  }
+
+  Future<void> loadMoreAllTime() async {
+    if (_dateScope != ExpenseDateScope.allTime ||
+        _isAllTimeLoading ||
+        !_hasMoreAllTime) {
+      return;
+    }
+
+    final requestGeneration = _allTimeQueryGeneration;
+
+    _isAllTimeLoading = true;
+    _allTimeErrorMessage = null;
+    notifyListeners();
+
+    try {
+      final page = await _expenseRepository.fetchExpensePage(
+        cursor: _allTimeCursor,
+        category: _selectedCategory,
+        pageSize: allTimePageSize,
+      );
+
+      if (requestGeneration != _allTimeQueryGeneration) {
+        return;
+      }
+
+      final existingIds = _allTimeExpenses
+          .map((expense) => expense.id)
+          .whereType<String>()
+          .toSet();
+
+      _allTimeExpenses.addAll(
+        page.expenses.where(
+          (expense) => expense.id == null || !existingIds.contains(expense.id),
+        ),
+      );
+
+      _allTimeCursor = page.nextCursor;
+      _hasMoreAllTime = page.hasMore;
+    } catch (error, stackTrace) {
+      if (requestGeneration != _allTimeQueryGeneration) {
+        return;
+      }
+
+      _allTimeErrorMessage = 'Unable to load older expenses.';
+
+      debugPrint('Failed to load paginated expenses: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    } finally {
+      if (requestGeneration == _allTimeQueryGeneration) {
+        _isAllTimeLoading = false;
         notifyListeners();
-      },
-      onError: (Object error, StackTrace stackTrace) {
-        _isLoading = false;
-        _errorMessage = 'Unable to load expenses.';
+      }
+    }
+  }
 
-        debugPrint('Failed to load expenses: $error');
-        debugPrintStack(stackTrace: stackTrace);
+  Future<void> refreshAllTime() async {
+    if (_dateScope != ExpenseDateScope.allTime) {
+      return;
+    }
 
-        notifyListeners();
-      },
-    );
+    await _resetAndLoadAllTime();
   }
 
   Future<bool> restoreExpense(Expense expense) async {
     try {
       await _expenseRepository.restoreExpense(expense);
+
+      if (_dateScope == ExpenseDateScope.allTime) {
+        await refreshAllTime();
+      }
+
       return true;
     } catch (error, stackTrace) {
       debugPrint('Failed to restore expense: $error');
@@ -173,6 +333,12 @@ class ExpenseListViewModel extends ChangeNotifier {
     }
 
     _selectedCategory = category;
+
+    if (_dateScope == ExpenseDateScope.allTime) {
+      unawaited(_resetAndLoadAllTime());
+      return;
+    }
+
     notifyListeners();
   }
 
@@ -186,7 +352,24 @@ class ExpenseListViewModel extends ChangeNotifier {
     }
 
     _dateScope = scope;
-    notifyListeners();
+
+    switch (scope) {
+      case ExpenseDateScope.month:
+        _dateExpenseSubscription?.cancel();
+        _allTimeQueryGeneration++;
+        _isAllTimeLoading = false;
+        notifyListeners();
+        break;
+      case ExpenseDateScope.specificDate:
+        _allTimeQueryGeneration++;
+        _isAllTimeLoading = false;
+        _watchSelectedDateExpenses();
+        break;
+      case ExpenseDateScope.allTime:
+        _dateExpenseSubscription?.cancel();
+        unawaited(_resetAndLoadAllTime());
+        break;
+    }
   }
 
   void setSelectedDate(DateTime date) {
@@ -197,6 +380,12 @@ class ExpenseListViewModel extends ChangeNotifier {
     }
 
     _selectedDate = normalizedDate;
+
+    if (_dateScope == ExpenseDateScope.specificDate) {
+      _watchSelectedDateExpenses();
+      return;
+    }
+
     notifyListeners();
   }
 
@@ -214,21 +403,32 @@ class ExpenseListViewModel extends ChangeNotifier {
   }
 
   Future<void> retry() async {
-    await _expenseSubscription?.cancel();
-    _watchExpenses();
+    if (_monthErrorMessage != null) {
+      _watchSelectedMonthExpenses();
+    }
 
-    notifyListeners();
+    switch (_dateScope) {
+      case ExpenseDateScope.month:
+        if (_monthErrorMessage == null) {
+          _watchSelectedMonthExpenses();
+        }
+        break;
+      case ExpenseDateScope.specificDate:
+        _watchSelectedDateExpenses();
+        break;
+      case ExpenseDateScope.allTime:
+        await _resetAndLoadAllTime();
+        break;
+    }
   }
 
   void goToPreviousMonth() {
     _selectedMonth = DateUtils.addMonthsToMonthDate(_selectedMonth, -1);
-
-    notifyListeners();
+    _watchSelectedMonthExpenses();
   }
 
   void goToNextMonth() {
     final nextMonth = DateUtils.addMonthsToMonthDate(_selectedMonth, 1);
-
     final currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
     if (nextMonth.isAfter(currentMonth)) {
@@ -236,7 +436,7 @@ class ExpenseListViewModel extends ChangeNotifier {
     }
 
     _selectedMonth = nextMonth;
-    notifyListeners();
+    _watchSelectedMonthExpenses();
   }
 
   void goToCurrentMonth() {
@@ -247,12 +447,13 @@ class ExpenseListViewModel extends ChangeNotifier {
     }
 
     _selectedMonth = currentMonth;
-    notifyListeners();
+    _watchSelectedMonthExpenses();
   }
 
   @override
   void dispose() {
-    _expenseSubscription?.cancel();
+    _monthExpenseSubscription?.cancel();
+    _dateExpenseSubscription?.cancel();
     super.dispose();
   }
 }

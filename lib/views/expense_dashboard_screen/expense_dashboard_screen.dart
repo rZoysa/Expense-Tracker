@@ -94,13 +94,9 @@ class ExpenseDashboardScreen extends StatelessWidget {
               if (recentExpenses.isEmpty)
                 SizedBox(
                   height: 220.h,
-                  child: EmptyState(
-                    title: viewModel.expenses.isEmpty
-                        ? 'No expenses yet'
-                        : 'No expenses this month',
-                    message: viewModel.expenses.isEmpty
-                        ? 'Add your first expense to get started.'
-                        : 'Choose another month or add a new expense.',
+                  child: const EmptyState(
+                    title: 'No expenses this month',
+                    message: 'Choose another month or add a new expense.',
                   ),
                 )
               else

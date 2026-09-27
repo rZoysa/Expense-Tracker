@@ -20,10 +20,10 @@ import 'package:provider/provider.dart';
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
 
-  void _openAddExpense(BuildContext context) {
+  Future<void> _openAddExpense(BuildContext context) async {
     final expenseRepository = context.read<ExpenseRepository>();
 
-    Navigator.of(context).push(
+    await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider(
           create: (_) =>
@@ -32,6 +32,15 @@ class TransactionsScreen extends StatelessWidget {
         ),
       ),
     );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    final viewModel = context.read<ExpenseListViewModel>();
+    if (viewModel.dateScope == ExpenseDateScope.allTime) {
+      await viewModel.refreshAllTime();
+    }
   }
 
   Future<void> _openExpense(BuildContext context, Expense expense) async {
@@ -48,6 +57,15 @@ class TransactionsScreen extends StatelessWidget {
         ),
       ),
     );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    final viewModel = context.read<ExpenseListViewModel>();
+    if (viewModel.dateScope == ExpenseDateScope.allTime) {
+      await viewModel.refreshAllTime();
+    }
 
     if (!context.mounted || deletedExpense == null) {
       return;
@@ -109,48 +127,34 @@ class TransactionsScreen extends StatelessWidget {
   }
 
   String _emptyStateTitle(ExpenseListViewModel viewModel) {
-    if (viewModel.expenses.isEmpty) {
-      return 'No expenses yet';
-    }
-
-    if (viewModel.dateScopedExpenses.isEmpty) {
-      return switch (viewModel.dateScope) {
-        ExpenseDateScope.month => 'No expenses this month',
-        ExpenseDateScope.specificDate => 'No expenses on this date',
-        ExpenseDateScope.allTime => 'No expenses yet',
-      };
-    }
-
     if (viewModel.hasSearchQuery) {
-      return 'No search results';
+      return viewModel.dateScope == ExpenseDateScope.allTime &&
+              viewModel.hasMoreAllTime
+          ? 'No matches in loaded transactions'
+          : 'No search results';
     }
 
     if (viewModel.selectedCategory != null) {
       return 'No ${viewModel.selectedCategory!.label} expenses';
     }
 
-    return 'No matching expenses';
+    return switch (viewModel.dateScope) {
+      ExpenseDateScope.month => 'No expenses this month',
+      ExpenseDateScope.specificDate => 'No expenses on this date',
+      ExpenseDateScope.allTime => 'No expenses yet',
+    };
   }
 
   String _emptyStateMessage(
     BuildContext context,
     ExpenseListViewModel viewModel,
   ) {
-    if (viewModel.expenses.isEmpty) {
-      return 'Add your first expense to get started.';
-    }
-
-    if (viewModel.dateScopedExpenses.isEmpty) {
-      return switch (viewModel.dateScope) {
-        ExpenseDateScope.month =>
-          'There are no expenses for the selected month.',
-        ExpenseDateScope.specificDate =>
-          'There are no expenses on ${MaterialLocalizations.of(context).formatMediumDate(viewModel.selectedDate)}.',
-        ExpenseDateScope.allTime => 'No expenses are available yet.',
-      };
-    }
-
     if (viewModel.hasSearchQuery) {
+      if (viewModel.dateScope == ExpenseDateScope.allTime &&
+          viewModel.hasMoreAllTime) {
+        return 'No loaded transactions match "${viewModel.searchQuery.trim()}". Load more to search older transactions.';
+      }
+
       return 'No transactions match "${viewModel.searchQuery.trim()}".';
     }
 
@@ -166,7 +170,59 @@ class TransactionsScreen extends StatelessWidget {
       };
     }
 
-    return 'There are no expenses matching the selected filters.';
+    return switch (viewModel.dateScope) {
+      ExpenseDateScope.month => 'There are no expenses for the selected month.',
+      ExpenseDateScope.specificDate =>
+        'There are no expenses on ${MaterialLocalizations.of(context).formatMediumDate(viewModel.selectedDate)}.',
+      ExpenseDateScope.allTime => 'Add your first expense to get started.',
+    };
+  }
+
+  Widget _buildEmptyState(
+    BuildContext context,
+    ExpenseListViewModel viewModel,
+  ) {
+    final canSearchOlderTransactions =
+        viewModel.dateScope == ExpenseDateScope.allTime &&
+        viewModel.hasSearchQuery &&
+        viewModel.hasMoreAllTime;
+
+    if (!canSearchOlderTransactions) {
+      return EmptyState(
+        title: _emptyStateTitle(viewModel),
+        message: _emptyStateMessage(context, viewModel),
+      );
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: EmptyState(
+            title: _emptyStateTitle(viewModel),
+            message: _emptyStateMessage(context, viewModel),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 96.h),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: viewModel.isLoadingMoreAllTime
+                  ? null
+                  : viewModel.loadMoreAllTime,
+              icon: viewModel.isLoadingMoreAllTime
+                  ? SizedBox(
+                      width: 18.r,
+                      height: 18.r,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(Icons.expand_more, size: 20.r),
+              label: const Text('Search older transactions'),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -180,18 +236,19 @@ class TransactionsScreen extends StatelessWidget {
       ),
       body: Consumer<ExpenseListViewModel>(
         builder: (context, viewModel, child) {
-          if (viewModel.isLoading) {
+          if (viewModel.isTransactionsLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (viewModel.hasError) {
+          if (viewModel.hasTransactionsError) {
             return ErrorState(
-              message: viewModel.errorMessage!,
+              message: viewModel.transactionsErrorMessage!,
               onRetry: viewModel.retry,
             );
           }
 
           final filteredExpenses = viewModel.filteredExpenses;
+          final isAllTime = viewModel.dateScope == ExpenseDateScope.allTime;
 
           return Column(
             children: [
@@ -240,7 +297,9 @@ class TransactionsScreen extends StatelessWidget {
                         ),
                         const Spacer(),
                         Text(
-                          '${filteredExpenses.length}',
+                          isAllTime
+                              ? '${filteredExpenses.length} shown'
+                              : '${filteredExpenses.length}',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -251,15 +310,21 @@ class TransactionsScreen extends StatelessWidget {
               SizedBox(height: 8.h),
               Expanded(
                 child: filteredExpenses.isEmpty
-                    ? EmptyState(
-                        title: _emptyStateTitle(viewModel),
-                        message: _emptyStateMessage(context, viewModel),
-                      )
+                    ? _buildEmptyState(context, viewModel)
                     : ExpenseList(
                         expenses: filteredExpenses,
                         onExpenseTap: (expense) {
                           _openExpense(context, expense);
                         },
+                        hasMore: isAllTime && viewModel.hasMoreAllTime,
+                        isLoadingMore:
+                            isAllTime && viewModel.isLoadingMoreAllTime,
+                        loadMoreErrorMessage: isAllTime
+                            ? viewModel.allTimeLoadMoreErrorMessage
+                            : null,
+                        onLoadMore: isAllTime
+                            ? viewModel.loadMoreAllTime
+                            : null,
                       ),
               ),
             ],

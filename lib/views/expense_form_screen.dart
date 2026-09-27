@@ -160,146 +160,151 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.w),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextFormField(
-                  controller: _titleController,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    hintText: 'e.g. Lunch',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    final title = value?.trim() ?? '';
-
-                    if (title.isEmpty) {
-                      return 'Please enter a title.';
-                    }
-
-                    if (title.length > 60) {
-                      return 'Title must be 60 characters or fewer.';
-                    }
-
-                    return null;
-                  },
-                ),
-                SizedBox(height: 16.h),
-                TextFormField(
-                  controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Amount',
-                    hintText: '0.00',
-                    prefixText: 'LKR ',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    final input = value?.trim() ?? '';
-
-                    if (input.isEmpty) {
-                      return 'Please enter an amount.';
-                    }
-
-                    final amount = double.tryParse(input);
-
-                    if (amount == null) {
-                      return 'Please enter a valid amount.';
-                    }
-
-                    if (amount <= 0) {
-                      return 'Amount must be greater than zero.';
-                    }
-
-                    return null;
-                  },
-                ),
-                SizedBox(height: 16.h),
-                DropdownButtonFormField<ExpenseCategory>(
-                  initialValue: viewModel.selectedCategory,
-                  decoration: const InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: ExpenseCategory.values
-                      .map(
-                        (category) => DropdownMenuItem(
-                          value: category,
-                          child: Text(_categoryLabel(category)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: viewModel.isSubmitting
-                      ? null
-                      : (category) {
-                          if (category != null) {
-                            context.read<ExpenseFormViewModel>().setCategory(
-                              category,
-                            );
-                          }
-                        },
-                ),
-                SizedBox(height: 16.h),
-                InkWell(
-                  onTap: viewModel.isSubmitting ? null : _pickDate,
-                  borderRadius: BorderRadius.circular(4.r),
-                  child: InputDecorator(
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(16.w),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
-                      labelText: 'Date',
+                      labelText: 'Title',
+                      hintText: 'e.g. Lunch',
                       border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.calendar_today_outlined),
                     ),
-                    child: Text(
-                      MaterialLocalizations.of(context)
-                          .formatMediumDate(viewModel.selectedDate),
+                    textCapitalization: .sentences,
+                    validator: (value) {
+                      final title = value?.trim() ?? '';
+
+                      if (title.isEmpty) {
+                        return 'Please enter a title.';
+                      }
+
+                      if (title.length > 60) {
+                        return 'Title must be 60 characters or fewer.';
+                      }
+
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16.h),
+                  TextFormField(
+                    controller: _amountController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Amount',
+                      hintText: '0.00',
+                      prefixText: 'LKR ',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      final input = value?.trim() ?? '';
+
+                      if (input.isEmpty) {
+                        return 'Please enter an amount.';
+                      }
+
+                      final amount = double.tryParse(input);
+
+                      if (amount == null) {
+                        return 'Please enter a valid amount.';
+                      }
+
+                      if (amount <= 0) {
+                        return 'Amount must be greater than zero.';
+                      }
+
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16.h),
+                  DropdownButtonFormField<ExpenseCategory>(
+                    initialValue: viewModel.selectedCategory,
+                    decoration: const InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: ExpenseCategory.values
+                        .map(
+                          (category) => DropdownMenuItem(
+                            value: category,
+                            child: Text(_categoryLabel(category)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: viewModel.isSubmitting
+                        ? null
+                        : (category) {
+                            if (category != null) {
+                              context.read<ExpenseFormViewModel>().setCategory(
+                                category,
+                              );
+                            }
+                          },
+                  ),
+                  SizedBox(height: 16.h),
+                  InkWell(
+                    onTap: viewModel.isSubmitting ? null : _pickDate,
+                    borderRadius: BorderRadius.circular(4.r),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Date',
+                        border: OutlineInputBorder(),
+                        suffixIcon: Icon(Icons.calendar_today_outlined),
+                      ),
+                      child: Text(
+                        MaterialLocalizations.of(context)
+                            .formatMediumDate(viewModel.selectedDate),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: 16.h),
-                TextFormField(
-                  controller: _noteController,
-                  maxLines: 3,
-                  maxLength: 200,
-                  decoration: const InputDecoration(
-                    labelText: 'Note',
-                    hintText: 'Optional description',
-                    alignLabelWithHint: true,
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                if (viewModel.errorMessage != null) ...[
-                  SizedBox(height: 8.h),
-                  Text(
-                    viewModel.errorMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                  SizedBox(height: 16.h),
+                  TextFormField(
+                    controller: _noteController,
+                    maxLines: 3,
+                    maxLength: 200,
+                    textCapitalization: .sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Note',
+                      hintText: 'Optional description',
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(),
                     ),
+                  ),
+                  if (viewModel.errorMessage != null) ...[
+                    SizedBox(height: 8.h),
+                    Text(
+                      viewModel.errorMessage!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: 24.h),
+                  FilledButton(
+                    onPressed: viewModel.isSubmitting ? null : _submit,
+                    child: viewModel.isSubmitting
+                        ? SizedBox(
+                            width: 20.r,
+                            height: 20.r,
+                            child: CircularProgressIndicator(strokeWidth: 2.r),
+                          )
+                        : Text(
+                            viewModel.isEditing
+                                ? 'Update Expense'
+                                : 'Save Expense',
+                          ),
                   ),
                 ],
-                SizedBox(height: 24.h),
-                FilledButton(
-                  onPressed: viewModel.isSubmitting ? null : _submit,
-                  child: viewModel.isSubmitting
-                      ? SizedBox(
-                          width: 20.r,
-                          height: 20.r,
-                          child: CircularProgressIndicator(strokeWidth: 2.r),
-                        )
-                      : Text(
-                          viewModel.isEditing
-                              ? 'Update Expense'
-                              : 'Save Expense',
-                        ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
