@@ -110,12 +110,8 @@ class AuthService {
     return refreshedUser;
   }
 
-  Future<void> sendPasswordResetEmail({
-    required String email,
-  }) async {
-    await _firebaseAuth.sendPasswordResetEmail(
-      email: email.trim(),
-    );
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
   }
 
   Future<User> signOutToAnonymous() async {

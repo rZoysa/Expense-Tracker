@@ -4,10 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 class PasswordResetScreen extends StatefulWidget {
-  const PasswordResetScreen({
-    this.initialEmail,
-    super.key,
-  });
+  const PasswordResetScreen({this.initialEmail, super.key});
 
   final String? initialEmail;
 
@@ -22,9 +19,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
   @override
   void initState() {
     super.initState();
-    _emailController = TextEditingController(
-      text: widget.initialEmail ?? '',
-    );
+    _emailController = TextEditingController(text: widget.initialEmail ?? '');
   }
 
   @override
@@ -71,9 +66,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reset password'),
-      ),
+      appBar: AppBar(title: const Text('Reset password')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
@@ -91,9 +84,8 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                 Text(
                   'Forgot your password?',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(context).textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 SizedBox(height: 8.h),
                 Text(
@@ -126,9 +118,8 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                     ),
                     child: Text(
                       authViewModel.errorMessage!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onErrorContainer,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(color: colorScheme.onErrorContainer),
                     ),
                   ),
                 ],

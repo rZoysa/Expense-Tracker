@@ -37,9 +37,7 @@ class ExpenseDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Expense Tracker'),
-      ),
+      appBar: AppBar(title: const Text('Expense Tracker')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddExpense(context),
         icon: Icon(Icons.add, size: 24.r),

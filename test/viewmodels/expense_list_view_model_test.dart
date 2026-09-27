@@ -1,5 +1,6 @@
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/models/expense_category.dart';
+import 'package:expense_tracker/models/expense_date_scope.dart';
 import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -25,6 +26,7 @@ void main() {
       expect(viewModel.isLoading, isTrue);
       expect(viewModel.expenses, isEmpty);
       expect(viewModel.hasError, isFalse);
+      expect(viewModel.dateScope, ExpenseDateScope.month);
     });
 
     test('updates expenses when repository emits data', () {
@@ -305,6 +307,217 @@ void main() {
       expect(viewModel.filteredExpenses, hasLength(2));
     });
 
+    test('filters expenses by a specific selected date', () {
+      final selectedDate = DateTime(2026, 9, 15);
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Lunch',
+          amount: 1000,
+          category: ExpenseCategory.food,
+          date: DateTime(2026, 9, 15, 12, 30),
+        ),
+        _expense(
+          id: '2',
+          title: 'Fuel',
+          amount: 2000,
+          category: ExpenseCategory.transport,
+          date: DateTime(2026, 9, 16),
+        ),
+      ]);
+
+      viewModel.setSelectedDate(selectedDate);
+      viewModel.setDateScope(ExpenseDateScope.specificDate);
+
+      expect(viewModel.filteredExpenses, hasLength(1));
+      expect(viewModel.filteredExpenses.single.title, 'Lunch');
+    });
+
+    test('combines specific date and category filters', () {
+      final selectedDate = DateTime(2026, 9, 15);
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Lunch',
+          amount: 1000,
+          category: ExpenseCategory.food,
+          date: DateTime(2026, 9, 15, 12),
+        ),
+        _expense(
+          id: '2',
+          title: 'Taxi',
+          amount: 1500,
+          category: ExpenseCategory.transport,
+          date: DateTime(2026, 9, 15, 18),
+        ),
+      ]);
+
+      viewModel.setSelectedDate(selectedDate);
+      viewModel.setDateScope(ExpenseDateScope.specificDate);
+      viewModel.setCategoryFilter(ExpenseCategory.food);
+
+      expect(viewModel.filteredExpenses, hasLength(1));
+      expect(viewModel.filteredExpenses.single.title, 'Lunch');
+    });
+
+    test('all-time category filter includes expenses from multiple months', () {
+      final selectedMonth = viewModel.selectedMonth;
+      final previousMonth = DateTime(
+        selectedMonth.year,
+        selectedMonth.month - 1,
+      );
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Current Lunch',
+          amount: 1000,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 10),
+        ),
+        _expense(
+          id: '2',
+          title: 'Previous Groceries',
+          amount: 2500,
+          category: ExpenseCategory.food,
+          date: DateTime(previousMonth.year, previousMonth.month, 8),
+        ),
+        _expense(
+          id: '3',
+          title: 'Fuel',
+          amount: 3000,
+          category: ExpenseCategory.transport,
+          date: DateTime(previousMonth.year, previousMonth.month, 6),
+        ),
+      ]);
+
+      viewModel.setDateScope(ExpenseDateScope.allTime);
+      viewModel.setCategoryFilter(ExpenseCategory.food);
+
+      expect(viewModel.filteredExpenses, hasLength(2));
+      expect(viewModel.filteredExpenses.map((expense) => expense.title), [
+        'Current Lunch',
+        'Previous Groceries',
+      ]);
+    });
+
+    test(
+      'all-time scope with no category returns complete expense history',
+      () {
+        final selectedMonth = viewModel.selectedMonth;
+        final previousMonth = DateTime(
+          selectedMonth.year,
+          selectedMonth.month - 1,
+        );
+
+        repository.emitExpenses([
+          _expense(
+            id: '1',
+            title: 'Current',
+            amount: 1000,
+            category: ExpenseCategory.food,
+            date: DateTime(selectedMonth.year, selectedMonth.month, 10),
+          ),
+          _expense(
+            id: '2',
+            title: 'Previous',
+            amount: 2000,
+            category: ExpenseCategory.bills,
+            date: DateTime(previousMonth.year, previousMonth.month, 10),
+          ),
+        ]);
+
+        viewModel.setDateScope(ExpenseDateScope.allTime);
+
+        expect(viewModel.filteredExpenses, hasLength(2));
+        expect(viewModel.dateScopedExpenses, hasLength(2));
+      },
+    );
+
+    test('search combines with all-time date scope and category', () {
+      final selectedMonth = viewModel.selectedMonth;
+      final previousMonth = DateTime(
+        selectedMonth.year,
+        selectedMonth.month - 1,
+      );
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Team Lunch',
+          amount: 1800,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 20),
+        ),
+        _expense(
+          id: '2',
+          title: 'Family Dinner',
+          amount: 3000,
+          category: ExpenseCategory.food,
+          date: DateTime(previousMonth.year, previousMonth.month, 18),
+        ),
+        _expense(
+          id: '3',
+          title: 'Team Taxi',
+          amount: 1500,
+          category: ExpenseCategory.transport,
+          date: DateTime(previousMonth.year, previousMonth.month, 15),
+        ),
+      ]);
+
+      viewModel.setDateScope(ExpenseDateScope.allTime);
+      viewModel.setCategoryFilter(ExpenseCategory.food);
+      viewModel.setSearchQuery('team');
+
+      expect(viewModel.filteredExpenses, hasLength(1));
+      expect(viewModel.filteredExpenses.single.title, 'Team Lunch');
+    });
+
+    test('changing date scope preserves selected month and selected date', () {
+      final originalMonth = viewModel.selectedMonth;
+      final selectedDate = DateTime(2026, 8, 23);
+
+      viewModel.setSelectedDate(selectedDate);
+      viewModel.setDateScope(ExpenseDateScope.allTime);
+      viewModel.setDateScope(ExpenseDateScope.month);
+
+      expect(viewModel.selectedMonth, originalMonth);
+      expect(viewModel.selectedDate, selectedDate);
+    });
+
+    test('date scope does not change dashboard month-derived expenses', () {
+      final selectedMonth = viewModel.selectedMonth;
+      final previousMonth = DateTime(
+        selectedMonth.year,
+        selectedMonth.month - 1,
+      );
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Current',
+          amount: 1000,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 10),
+        ),
+        _expense(
+          id: '2',
+          title: 'Previous',
+          amount: 2000,
+          category: ExpenseCategory.food,
+          date: DateTime(previousMonth.year, previousMonth.month, 10),
+        ),
+      ]);
+
+      viewModel.setDateScope(ExpenseDateScope.allTime);
+
+      expect(viewModel.filteredExpenses, hasLength(2));
+      expect(viewModel.selectedMonthExpenses, hasLength(1));
+      expect(viewModel.monthlyTotal, 1000);
+    });
+
     test('groups and sums selected month expenses by category', () {
       final selectedMonth = viewModel.selectedMonth;
 
@@ -395,14 +608,11 @@ void main() {
         ),
       ]);
 
-      expect(
-        viewModel.categorySummary.map((summary) => summary.category),
-        [
-          ExpenseCategory.bills,
-          ExpenseCategory.transport,
-          ExpenseCategory.food,
-        ],
-      );
+      expect(viewModel.categorySummary.map((summary) => summary.category), [
+        ExpenseCategory.bills,
+        ExpenseCategory.transport,
+        ExpenseCategory.food,
+      ]);
     });
 
     test('category summary is empty when selected month has no expenses', () {

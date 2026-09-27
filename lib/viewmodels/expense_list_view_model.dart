@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:expense_tracker/models/category_expense_summary.dart';
 import 'package:expense_tracker/models/expense_category.dart';
+import 'package:expense_tracker/models/expense_date_scope.dart';
 import 'package:flutter/material.dart';
 
 import '../models/expense.dart';
@@ -21,16 +22,26 @@ class ExpenseListViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   ExpenseCategory? _selectedCategory;
+  ExpenseDateScope _dateScope = ExpenseDateScope.month;
   String _searchQuery = '';
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  DateTime _selectedDate = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
 
   ExpenseCategory? get selectedCategory => _selectedCategory;
+
+  ExpenseDateScope get dateScope => _dateScope;
 
   String get searchQuery => _searchQuery;
 
   bool get hasSearchQuery => _searchQuery.trim().isNotEmpty;
 
   DateTime get selectedMonth => _selectedMonth;
+
+  DateTime get selectedDate => _selectedDate;
 
   List<Expense> get expenses => List.unmodifiable(_expenses);
 
@@ -58,10 +69,23 @@ class ExpenseListViewModel extends ChangeNotifier {
     return selectedMonthExpenses.take(3).toList();
   }
 
+  List<Expense> get dateScopedExpenses {
+    return switch (_dateScope) {
+      ExpenseDateScope.month => selectedMonthExpenses,
+      ExpenseDateScope.specificDate =>
+        _expenses
+            .where(
+              (expense) => DateUtils.isSameDay(expense.date, _selectedDate),
+            )
+            .toList(),
+      ExpenseDateScope.allTime => List.of(_expenses),
+    };
+  }
+
   List<Expense> get filteredExpenses {
     final normalizedSearchQuery = _searchQuery.trim().toLowerCase();
 
-    return selectedMonthExpenses.where((expense) {
+    return dateScopedExpenses.where((expense) {
       final matchesCategory =
           _selectedCategory == null || expense.category == _selectedCategory;
 
@@ -93,15 +117,16 @@ class ExpenseListViewModel extends ChangeNotifier {
       );
     }
 
-    final summaries = totalsByCategory.entries
-        .map(
-          (entry) => CategoryExpenseSummary(
-            category: entry.key,
-            total: entry.value,
-          ),
-        )
-        .toList()
-      ..sort((first, second) => second.total.compareTo(first.total));
+    final summaries =
+        totalsByCategory.entries
+            .map(
+              (entry) => CategoryExpenseSummary(
+                category: entry.key,
+                total: entry.value,
+              ),
+            )
+            .toList()
+          ..sort((first, second) => second.total.compareTo(first.total));
 
     return List.unmodifiable(summaries);
   }
@@ -153,6 +178,26 @@ class ExpenseListViewModel extends ChangeNotifier {
 
   void clearCategoryFilter() {
     setCategoryFilter(null);
+  }
+
+  void setDateScope(ExpenseDateScope scope) {
+    if (_dateScope == scope) {
+      return;
+    }
+
+    _dateScope = scope;
+    notifyListeners();
+  }
+
+  void setSelectedDate(DateTime date) {
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+
+    if (DateUtils.isSameDay(_selectedDate, normalizedDate)) {
+      return;
+    }
+
+    _selectedDate = normalizedDate;
+    notifyListeners();
   }
 
   void setSearchQuery(String query) {

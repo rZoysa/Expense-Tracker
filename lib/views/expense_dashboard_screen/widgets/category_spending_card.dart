@@ -26,9 +26,8 @@ class CategorySpendingCard extends StatelessWidget {
           children: [
             Text(
               'Spending by category',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
             SizedBox(height: 4.h),
             Text(
@@ -66,15 +65,9 @@ class CategorySpendingCard extends StatelessWidget {
 
                   return Column(
                     children: [
-                      _CategoryDonutChart(
-                        summaries: summaries,
-                        total: total,
-                      ),
+                      _CategoryDonutChart(summaries: summaries, total: total),
                       SizedBox(height: 20.h),
-                      _CategoryLegend(
-                        summaries: summaries,
-                        total: total,
-                      ),
+                      _CategoryLegend(summaries: summaries, total: total),
                     ],
                   );
                 },
@@ -87,10 +80,7 @@ class CategorySpendingCard extends StatelessWidget {
 }
 
 class _CategoryDonutChart extends StatelessWidget {
-  const _CategoryDonutChart({
-    required this.summaries,
-    required this.total,
-  });
+  const _CategoryDonutChart({required this.summaries, required this.total});
 
   final List<CategoryExpenseSummary> summaries;
   final double total;
@@ -130,10 +120,7 @@ class _CategoryDonutChart extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Total',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                Text('Total', style: Theme.of(context).textTheme.bodySmall),
                 SizedBox(height: 2.h),
                 SizedBox(
                   width: 108.w,
@@ -141,9 +128,8 @@ class _CategoryDonutChart extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     child: Text(
                       CurrencyFormatter.formatLkr(total),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -157,10 +143,7 @@ class _CategoryDonutChart extends StatelessWidget {
 }
 
 class _CategoryLegend extends StatelessWidget {
-  const _CategoryLegend({
-    required this.summaries,
-    required this.total,
-  });
+  const _CategoryLegend({required this.summaries, required this.total});
 
   final List<CategoryExpenseSummary> summaries;
   final double total;
@@ -202,10 +185,7 @@ class _CategoryLegendItem extends StatelessWidget {
         Container(
           width: 12.r,
           height: 12.r,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         SizedBox(width: 10.w),
         Expanded(
@@ -234,9 +214,8 @@ class _CategoryLegendItem extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Text(
                   CurrencyFormatter.formatLkr(summary.total),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               Text(
@@ -270,9 +249,8 @@ class _EmptyCategorySummary extends StatelessWidget {
           SizedBox(height: 12.h),
           Text(
             'No spending data this month',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -280,16 +258,15 @@ class _EmptyCategorySummary extends StatelessWidget {
   }
 }
 
-Color _categoryColor(
-  ExpenseCategory category,
-  ColorScheme colorScheme,
-) {
+Color _categoryColor(ExpenseCategory category, ColorScheme colorScheme) {
   return switch (category) {
     ExpenseCategory.food => colorScheme.primary,
     ExpenseCategory.transport => colorScheme.tertiary,
     ExpenseCategory.shopping => colorScheme.secondary,
     ExpenseCategory.bills => colorScheme.error,
-    ExpenseCategory.entertainment => colorScheme.primary.withValues(alpha: 0.65),
+    ExpenseCategory.entertainment => colorScheme.primary.withValues(
+      alpha: 0.65,
+    ),
     ExpenseCategory.health => colorScheme.tertiary.withValues(alpha: 0.65),
     ExpenseCategory.education => colorScheme.secondary.withValues(alpha: 0.65),
     ExpenseCategory.other => colorScheme.error.withValues(alpha: 0.65),

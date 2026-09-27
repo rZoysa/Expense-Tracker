@@ -39,10 +39,7 @@ class ProfileSettingsSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 8.w,
-                    vertical: 8.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
                   child: Text(
                     'Choose theme',
                     style: Theme.of(sheetContext).textTheme.titleLarge
@@ -79,9 +76,8 @@ class ProfileSettingsSection extends StatelessWidget {
       children: [
         Text(
           'Settings',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
         SizedBox(height: 8.h),
         Card(

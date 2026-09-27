@@ -1,4 +1,6 @@
+import 'package:expense_tracker/extensions/expense_category_extension.dart';
 import 'package:expense_tracker/models/expense.dart';
+import 'package:expense_tracker/models/expense_date_scope.dart';
 import 'package:expense_tracker/repositories/expense_repository.dart';
 import 'package:expense_tracker/viewmodels/expense_form_view_model.dart';
 import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
@@ -8,6 +10,8 @@ import 'package:expense_tracker/views/shared/widgets/error_state.dart';
 import 'package:expense_tracker/views/shared/widgets/expense_list.dart';
 import 'package:expense_tracker/views/shared/widgets/month_selector.dart';
 import 'package:expense_tracker/views/transactions/widgets/category_filter.dart';
+import 'package:expense_tracker/views/transactions/widgets/date_scope_selector.dart';
+import 'package:expense_tracker/views/transactions/widgets/selected_date_selector.dart';
 import 'package:expense_tracker/views/transactions/widgets/transaction_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -85,36 +89,84 @@ class TransactionsScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _selectDate(
+    BuildContext context,
+    ExpenseListViewModel viewModel,
+  ) async {
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: viewModel.selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      helpText: 'Select expense date',
+    );
+
+    if (selectedDate == null || !context.mounted) {
+      return;
+    }
+
+    context.read<ExpenseListViewModel>().setSelectedDate(selectedDate);
+  }
+
   String _emptyStateTitle(ExpenseListViewModel viewModel) {
     if (viewModel.expenses.isEmpty) {
       return 'No expenses yet';
+    }
+
+    if (viewModel.dateScopedExpenses.isEmpty) {
+      return switch (viewModel.dateScope) {
+        ExpenseDateScope.month => 'No expenses this month',
+        ExpenseDateScope.specificDate => 'No expenses on this date',
+        ExpenseDateScope.allTime => 'No expenses yet',
+      };
     }
 
     if (viewModel.hasSearchQuery) {
       return 'No search results';
     }
 
-    if (viewModel.selectedMonthExpenses.isEmpty) {
-      return 'No expenses this month';
+    if (viewModel.selectedCategory != null) {
+      return 'No ${viewModel.selectedCategory!.label} expenses';
     }
 
     return 'No matching expenses';
   }
 
-  String _emptyStateMessage(ExpenseListViewModel viewModel) {
+  String _emptyStateMessage(
+    BuildContext context,
+    ExpenseListViewModel viewModel,
+  ) {
     if (viewModel.expenses.isEmpty) {
       return 'Add your first expense to get started.';
+    }
+
+    if (viewModel.dateScopedExpenses.isEmpty) {
+      return switch (viewModel.dateScope) {
+        ExpenseDateScope.month =>
+          'There are no expenses for the selected month.',
+        ExpenseDateScope.specificDate =>
+          'There are no expenses on ${MaterialLocalizations.of(context).formatMediumDate(viewModel.selectedDate)}.',
+        ExpenseDateScope.allTime => 'No expenses are available yet.',
+      };
     }
 
     if (viewModel.hasSearchQuery) {
       return 'No transactions match "${viewModel.searchQuery.trim()}".';
     }
 
-    if (viewModel.selectedMonthExpenses.isEmpty) {
-      return 'There are no expenses for the selected month.';
+    if (viewModel.selectedCategory != null) {
+      final categoryLabel = viewModel.selectedCategory!.label;
+      return switch (viewModel.dateScope) {
+        ExpenseDateScope.month =>
+          'There are no $categoryLabel expenses for the selected month.',
+        ExpenseDateScope.specificDate =>
+          'There are no $categoryLabel expenses on the selected date.',
+        ExpenseDateScope.allTime =>
+          'There are no $categoryLabel expenses in your history.',
+      };
     }
 
-    return 'There are no expenses matching the selected category.';
+    return 'There are no expenses matching the selected filters.';
   }
 
   @override
@@ -153,13 +205,27 @@ class TransactionsScreen extends StatelessWidget {
                       onClear: viewModel.clearSearchQuery,
                     ),
                     SizedBox(height: 16.h),
-                    MonthSelector(
-                      selectedMonth: viewModel.selectedMonth,
-                      isCurrentMonth: viewModel.isCurrentMonth,
-                      onPrevious: viewModel.goToPreviousMonth,
-                      onNext: viewModel.goToNextMonth,
+                    DateScopeSelector(
+                      selectedScope: viewModel.dateScope,
+                      onSelected: viewModel.setDateScope,
                     ),
                     SizedBox(height: 12.h),
+                    if (viewModel.dateScope == ExpenseDateScope.month) ...[
+                      MonthSelector(
+                        selectedMonth: viewModel.selectedMonth,
+                        isCurrentMonth: viewModel.isCurrentMonth,
+                        onPrevious: viewModel.goToPreviousMonth,
+                        onNext: viewModel.goToNextMonth,
+                      ),
+                      SizedBox(height: 12.h),
+                    ] else if (viewModel.dateScope ==
+                        ExpenseDateScope.specificDate) ...[
+                      SelectedDateSelector(
+                        selectedDate: viewModel.selectedDate,
+                        onTap: () => _selectDate(context, viewModel),
+                      ),
+                      SizedBox(height: 12.h),
+                    ],
                     CategoryFilter(
                       selectedCategory: viewModel.selectedCategory,
                       onSelected: viewModel.setCategoryFilter,
@@ -187,7 +253,7 @@ class TransactionsScreen extends StatelessWidget {
                 child: filteredExpenses.isEmpty
                     ? EmptyState(
                         title: _emptyStateTitle(viewModel),
-                        message: _emptyStateMessage(viewModel),
+                        message: _emptyStateMessage(context, viewModel),
                       )
                     : ExpenseList(
                         expenses: filteredExpenses,

@@ -45,10 +45,7 @@ class AuthViewModel extends ChangeNotifier {
     );
   }
 
-  Future<bool> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> signIn({required String email, required String password}) async {
     return _runUserOperation(
       operation: () => _authService.signInWithEmailPassword(
         email: email.trim(),
@@ -58,9 +55,7 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   Future<bool> signOutToGuest() async {
-    return _runUserOperation(
-      operation: _authService.signOutToAnonymous,
-    );
+    return _runUserOperation(operation: _authService.signOutToAnonymous);
   }
 
   Future<bool> sendVerificationEmail() async {
@@ -81,9 +76,7 @@ class AuthViewModel extends ChangeNotifier {
     );
   }
 
-  Future<bool> sendPasswordReset({
-    required String email,
-  }) async {
+  Future<bool> sendPasswordReset({required String email}) async {
     if (_isProcessing) {
       return false;
     }
@@ -91,9 +84,7 @@ class AuthViewModel extends ChangeNotifier {
     _beginOperation();
 
     try {
-      await _authService.sendPasswordResetEmail(
-        email: email.trim(),
-      );
+      await _authService.sendPasswordResetEmail(email: email.trim());
       return true;
     } on FirebaseAuthException catch (error, stackTrace) {
       if (error.code == 'user-not-found') {
@@ -207,8 +198,9 @@ class AuthViewModel extends ChangeNotifier {
       'weak-password' => 'Please choose a stronger password.',
       'email-already-in-use' || 'credential-already-in-use' =>
         'An account already exists with this email. Try signing in instead.',
-      'user-not-found' || 'wrong-password' || 'invalid-credential' =>
-        'The email or password is incorrect.',
+      'user-not-found' ||
+      'wrong-password' ||
+      'invalid-credential' => 'The email or password is incorrect.',
       'user-disabled' => 'This account has been disabled.',
       'too-many-requests' =>
         'Too many attempts. Please wait a moment and try again.',
