@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MonthSelector extends StatelessWidget {
   const MonthSelector({
@@ -16,28 +17,30 @@ class MonthSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final monthLabel = MaterialLocalizations.of(context)
-        .formatMonthYear(selectedMonth);
+    final monthLabel = MaterialLocalizations.of(
+      context,
+    ).formatMonthYear(selectedMonth);
 
     return Row(
       children: [
         IconButton(
           onPressed: onPrevious,
           tooltip: 'Previous month',
-          icon: const Icon(Icons.chevron_left),
+          icon: Icon(Icons.chevron_left, size: 24.r),
         ),
         Expanded(
           child: Text(
             monthLabel,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         IconButton(
           onPressed: isCurrentMonth ? null : onNext,
           tooltip: 'Next month',
-          icon: const Icon(Icons.chevron_right),
+          icon: Icon(Icons.chevron_right, size: 24.r),
         ),
       ],
     );

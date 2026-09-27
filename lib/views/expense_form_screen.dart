@@ -1,5 +1,6 @@
 import 'package:expense_tracker/models/expense.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 import '../models/expense_category.dart';
@@ -154,13 +155,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               color: Colors.red,
               onPressed: viewModel.isSubmitting ? null : _deleteExpense,
               tooltip: 'Delete expense',
-              icon: const Icon(Icons.delete_outline),
+              icon: Icon(Icons.delete_outline, size: 24.r),
             ),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16.w),
           child: Form(
             key: _formKey,
             child: Column(
@@ -188,7 +189,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 TextFormField(
                   controller: _amountController,
                   keyboardType: const TextInputType.numberWithOptions(
@@ -221,7 +222,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 DropdownButtonFormField<ExpenseCategory>(
                   initialValue: viewModel.selectedCategory,
                   decoration: const InputDecoration(
@@ -246,10 +247,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           }
                         },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 InkWell(
                   onTap: viewModel.isSubmitting ? null : _pickDate,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(4.r),
                   child: InputDecorator(
                     decoration: const InputDecoration(
                       labelText: 'Date',
@@ -257,12 +258,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                       suffixIcon: Icon(Icons.calendar_today_outlined),
                     ),
                     child: Text(
-                      MaterialLocalizations.of(context)
-                          .formatMediumDate(viewModel.selectedDate),
+                      MaterialLocalizations.of(
+                        context,
+                      ).formatMediumDate(viewModel.selectedDate),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
                 TextFormField(
                   controller: _noteController,
                   maxLines: 3,
@@ -275,7 +277,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                   ),
                 ),
                 if (viewModel.errorMessage != null) ...[
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h),
                   Text(
                     viewModel.errorMessage!,
                     style: TextStyle(
@@ -283,14 +285,14 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
                 FilledButton(
                   onPressed: viewModel.isSubmitting ? null : _submit,
                   child: viewModel.isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                      ? SizedBox(
+                          width: 20.r,
+                          height: 20.r,
+                          child: CircularProgressIndicator(strokeWidth: 2.r),
                         )
                       : Text(
                           viewModel.isEditing

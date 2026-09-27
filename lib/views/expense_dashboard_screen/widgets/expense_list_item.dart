@@ -2,6 +2,7 @@ import 'package:expense_tracker/extensions/expense_category_extension.dart';
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ExpenseListItem extends StatelessWidget {
   const ExpenseListItem({
@@ -17,16 +18,18 @@ class ExpenseListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final formattedDate = MaterialLocalizations.of(context)
-        .formatMediumDate(expense.date);
+    final formattedDate = MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(expense.date);
 
     return ListTile(
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       leading: CircleAvatar(
+        radius: 20.r,
         backgroundColor: colorScheme.secondaryContainer,
         foregroundColor: colorScheme.onSecondaryContainer,
-        child: Icon(expense.category.icon),
+        child: Icon(expense.category.icon, size: 22.r),
       ),
       title: Text(
         expense.title,
@@ -41,8 +44,9 @@ class ExpenseListItem extends StatelessWidget {
       ),
       trailing: Text(
         CurrencyFormatter.formatLkr(expense.amount),
-        style: Theme.of(context).textTheme.bodyLarge
-            ?.copyWith(fontWeight: FontWeight.w600),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
       ),
     );
   }

@@ -11,6 +11,7 @@ import 'package:expense_tracker/views/expense_dashboard_screen/widgets/month_sel
 import 'package:expense_tracker/views/expense_dashboard_screen/widgets/monthly_total_card.dart';
 import 'package:expense_tracker/views/expense_form_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 class ExpenseDashboardScreen extends StatelessWidget {
@@ -100,13 +101,14 @@ class ExpenseDashboardScreen extends StatelessWidget {
               Theme.of(context).brightness == Brightness.dark
                   ? Icons.light_mode_outlined
                   : Icons.dark_mode_outlined,
+              size: 24.r,
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddExpense(context),
-        icon: const Icon(Icons.add),
+        icon: Icon(Icons.add, size: 24.r),
         label: const Text('Add Expense'),
       ),
       body: Consumer<ExpenseListViewModel>(
@@ -127,7 +129,7 @@ class ExpenseDashboardScreen extends StatelessWidget {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
                 child: Column(
                   children: [
                     MonthSelector(
@@ -136,14 +138,14 @@ class ExpenseDashboardScreen extends StatelessWidget {
                       onPrevious: viewModel.goToPreviousMonth,
                       onNext: viewModel.goToNextMonth,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
                     MonthlyTotalCard(total: viewModel.monthlyTotal),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16.h),
                     CategoryFilter(
                       selectedCategory: viewModel.selectedCategory,
                       onSelected: viewModel.setCategoryFilter,
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20.h),
                     Row(
                       children: [
                         Text(
@@ -161,7 +163,7 @@ class ExpenseDashboardScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Expanded(
                 child: filteredExpenses.isEmpty
                     ? DashboardEmptyState(

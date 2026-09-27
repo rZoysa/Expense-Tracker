@@ -22,8 +22,9 @@ class MonthlyTotalCard extends StatelessWidget {
             children: [
               Text(
                 'Total expenses',
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: colorScheme.onPrimaryContainer),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onPrimaryContainer,
+                ),
               ),
               SizedBox(height: 6.h),
               Text(
@@ -36,8 +37,9 @@ class MonthlyTotalCard extends StatelessWidget {
               SizedBox(height: 4.h),
               Text(
                 'For the selected month',
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: colorScheme.onPrimaryContainer),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onPrimaryContainer,
+                ),
               ),
             ],
           ),
