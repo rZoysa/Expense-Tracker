@@ -2,6 +2,7 @@ import 'package:expense_tracker/repositories/expense_repository.dart';
 import 'package:expense_tracker/viewmodels/expense_form_view_model.dart';
 import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
 import 'package:expense_tracker/views/expense_dashboard_screen/widgets/category_spending_card.dart';
+import 'package:expense_tracker/views/expense_dashboard_screen/widgets/dashboard_loading_skeleton.dart';
 import 'package:expense_tracker/views/expense_dashboard_screen/widgets/monthly_total_card.dart';
 import 'package:expense_tracker/views/expense_dashboard_screen/widgets/recent_expenses_list.dart';
 import 'package:expense_tracker/views/expense_form_screen.dart';
@@ -46,7 +47,7 @@ class ExpenseDashboardScreen extends StatelessWidget {
       body: Consumer<ExpenseListViewModel>(
         builder: (context, viewModel, child) {
           if (viewModel.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const DashboardLoadingSkeleton();
           }
 
           if (viewModel.hasError) {

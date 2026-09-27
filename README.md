@@ -18,7 +18,7 @@ The app supports guest usage through Firebase Anonymous Authentication and lets 
 - Month, specific-date, all-time, and category filtering
 - Transaction search by title, note, or category
 - Form validation
-- Loading, empty, and error states
+- Skeleton loading, empty, and error states
 - Responsive UI using `flutter_screenutil`
 
 ### Additional features
@@ -70,6 +70,7 @@ Firebase-specific data access is kept inside the repository/service layer. ViewM
 - Provider
 - flutter_screenutil
 - fl_chart
+- skeletonizer
 - shared_preferences
 - intl
 

@@ -1,5 +1,6 @@
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/views/shared/widgets/expense_list_item.dart';
+import 'package:expense_tracker/views/shared/widgets/expense_list_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -92,34 +93,35 @@ class _ExpenseListState extends State<ExpenseList> {
         if (index == widget.expenses.length) {
           return Padding(
             padding: EdgeInsets.symmetric(vertical: 16.h),
-            child: Center(
-              child: widget.isLoadingMore
-                  ? SizedBox(
-                      width: 24.r,
-                      height: 24.r,
-                      child: const CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : widget.loadMoreErrorMessage != null
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.loadMoreErrorMessage!,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        SizedBox(height: 4.h),
-                        TextButton(
-                          onPressed: _requestNextPage,
-                          child: const Text('Try again'),
-                        ),
-                      ],
-                    )
-                  : TextButton.icon(
-                      onPressed: _requestNextPage,
-                      icon: Icon(Icons.expand_more, size: 20.r),
-                      label: const Text('Load more'),
-                    ),
-            ),
+            child: widget.isLoadingMore
+                ? ExpenseListSkeleton(
+                    itemCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                  )
+                : Center(
+                    child: widget.loadMoreErrorMessage != null
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                widget.loadMoreErrorMessage!,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              SizedBox(height: 4.h),
+                              TextButton(
+                                onPressed: _requestNextPage,
+                                child: const Text('Try again'),
+                              ),
+                            ],
+                          )
+                        : TextButton.icon(
+                            onPressed: _requestNextPage,
+                            icon: Icon(Icons.expand_more, size: 20.r),
+                            label: const Text('Load more'),
+                          ),
+                  ),
           );
         }
 

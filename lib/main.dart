@@ -10,6 +10,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,6 +71,14 @@ class ExpenseTrackerApp extends StatelessWidget {
                 theme: AppTheme.light,
                 darkTheme: AppTheme.dark,
                 themeMode: themeViewModel.themeMode,
+                builder: (context, child) {
+                  return SkeletonizerConfig(
+                    data: SkeletonizerConfigData(
+                      brightness: Theme.of(context).brightness,
+                    ),
+                    child: child ?? const SizedBox.shrink(),
+                  );
+                },
                 home: const AuthenticatedExpenseScope(),
               );
             },

@@ -13,6 +13,7 @@ import 'package:expense_tracker/views/transactions/widgets/category_filter.dart'
 import 'package:expense_tracker/views/transactions/widgets/date_scope_selector.dart';
 import 'package:expense_tracker/views/transactions/widgets/selected_date_selector.dart';
 import 'package:expense_tracker/views/transactions/widgets/transaction_search_bar.dart';
+import 'package:expense_tracker/views/transactions/widgets/transactions_loading_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -210,14 +211,17 @@ class TransactionsScreen extends StatelessWidget {
               onPressed: viewModel.isLoadingMoreAllTime
                   ? null
                   : viewModel.loadMoreAllTime,
-              icon: viewModel.isLoadingMoreAllTime
-                  ? SizedBox(
-                      width: 18.r,
-                      height: 18.r,
-                      child: const CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(Icons.expand_more, size: 20.r),
-              label: const Text('Search older transactions'),
+              icon: Icon(
+                viewModel.isLoadingMoreAllTime
+                    ? Icons.more_horiz
+                    : Icons.expand_more,
+                size: 20.r,
+              ),
+              label: Text(
+                viewModel.isLoadingMoreAllTime
+                    ? 'Loading older transactions...'
+                    : 'Search older transactions',
+              ),
             ),
           ),
         ),
@@ -237,7 +241,7 @@ class TransactionsScreen extends StatelessWidget {
       body: Consumer<ExpenseListViewModel>(
         builder: (context, viewModel, child) {
           if (viewModel.isTransactionsLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const TransactionsLoadingSkeleton();
           }
 
           if (viewModel.hasTransactionsError) {
