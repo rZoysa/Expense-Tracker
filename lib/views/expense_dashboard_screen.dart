@@ -1,3 +1,4 @@
+import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/repositories/expense_repository.dart';
 import 'package:expense_tracker/viewmodels/expense_form_view_model.dart';
 import 'package:expense_tracker/views/expense_form_screen.dart';
@@ -8,6 +9,39 @@ import '../viewmodels/expense_list_view_model.dart';
 
 class ExpenseDashboardScreen extends StatelessWidget {
   const ExpenseDashboardScreen({super.key});
+
+  void _showDeletedSnackBar(BuildContext context, Expense deletedExpense) {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    scaffoldMessenger.hideCurrentSnackBar();
+
+    scaffoldMessenger.showSnackBar(
+      SnackBar(
+        content: const Text('Expense deleted'),
+        duration: const Duration(seconds: 5),
+        behavior: .floating,
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () async {
+            final wasRestored = await context
+                .read<ExpenseListViewModel>()
+                .restoreExpense(deletedExpense);
+
+            if (!context.mounted || wasRestored) {
+              return;
+            }
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Unable to restore expense.'),
+                behavior: .floating,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +93,30 @@ class ExpenseDashboardScreen extends StatelessWidget {
                 title: Text(expense.title),
                 subtitle: Text(expense.category.name),
                 trailing: Text(expense.amount.toStringAsFixed(2)),
+                onTap: () async {
+                  final expenseRepository = context.read<ExpenseRepository>();
+
+                  final deletedExpense = await Navigator.of(context)
+                      .push<Expense>(
+                        MaterialPageRoute(
+                          builder: (_) {
+                            return ChangeNotifierProvider(
+                              create: (_) => ExpenseFormViewModel(
+                                expenseRepository: expenseRepository,
+                                expense: expense,
+                              ),
+                              child: ExpenseFormScreen(expense: expense),
+                            );
+                          },
+                        ),
+                      );
+
+                  if (!context.mounted || deletedExpense == null) {
+                    return;
+                  }
+
+                  _showDeletedSnackBar(context, deletedExpense);
+                },
               );
             },
           );

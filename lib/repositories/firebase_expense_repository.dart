@@ -46,6 +46,17 @@ class FirebaseExpenseRepository implements ExpenseRepository {
     await _expensesCollection.doc(expenseId).delete();
   }
 
+  @override
+  Future<void> restoreExpense(Expense expense) async {
+    final expenseId = expense.id;
+
+    if (expenseId == null) {
+      throw ArgumentError('Cannot restore an expense without an ID.');
+    }
+
+    await _expensesCollection.doc(expenseId).set(_expenseToMap(expense));
+  }
+
   Map<String, dynamic> _expenseToMap(Expense expense) {
     return {
       'title': expense.title,

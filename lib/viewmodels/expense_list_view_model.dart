@@ -52,6 +52,18 @@ class ExpenseListViewModel extends ChangeNotifier {
     );
   }
 
+  Future<bool> restoreExpense(Expense expense) async {
+    try {
+      await _expenseRepository.restoreExpense(expense);
+      return true;
+    } catch (error, stackTrace) {
+      debugPrint('Failed to restore expense: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      return false;
+    }
+  }
+
   Future<void> retry() async {
     await _expenseSubscription?.cancel();
     _watchExpenses();

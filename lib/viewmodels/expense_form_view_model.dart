@@ -5,12 +5,19 @@ import '../models/expense_category.dart';
 import '../repositories/expense_repository.dart';
 
 class ExpenseFormViewModel extends ChangeNotifier {
-  ExpenseFormViewModel({required this._expenseRepository});
+  ExpenseFormViewModel({
+    required this._expenseRepository,
+    Expense? expense,
+  }) : _existingExpense = expense,
+       _selectedCategory = expense?.category ?? ExpenseCategory.food,
+       _selectedDate = expense?.date ?? DateTime.now();
 
   final ExpenseRepository _expenseRepository;
+  final Expense? _existingExpense;
 
-  ExpenseCategory _selectedCategory = ExpenseCategory.food;
-  DateTime _selectedDate = DateTime.now();
+  late ExpenseCategory _selectedCategory;
+  late DateTime _selectedDate;
+
   bool _isSubmitting = false;
   String? _errorMessage;
 
@@ -21,6 +28,8 @@ class ExpenseFormViewModel extends ChangeNotifier {
   bool get isSubmitting => _isSubmitting;
 
   String? get errorMessage => _errorMessage;
+
+  bool get isEditing => _existingExpense != null;
 
   void setCategory(ExpenseCategory category) {
     if (_selectedCategory == category) {
@@ -55,22 +64,62 @@ class ExpenseFormViewModel extends ChangeNotifier {
       final trimmedNote = note?.trim();
 
       final expense = Expense(
+        id: _existingExpense?.id,
         title: title.trim(),
         amount: amount,
         category: _selectedCategory,
         date: _selectedDate,
         note: trimmedNote == null || trimmedNote.isEmpty ? null : trimmedNote,
-        createdAt: now,
+        createdAt: _existingExpense?.createdAt ?? now,
         updatedAt: now,
       );
 
-      await _expenseRepository.addExpense(expense);
+      if (isEditing) {
+        await _expenseRepository.updateExpense(expense);
+      } else {
+        await _expenseRepository.addExpense(expense);
+      }
 
       return true;
     } catch (error, stackTrace) {
-      _errorMessage = 'Unable to save the expense. Please try again.';
+      _errorMessage = isEditing
+          ? 'Unable to update the expense. Please try again.'
+          : 'Unable to save the expense. Please try again.';
 
       debugPrint('Failed to save expense: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> deleteExpense() async {
+    if (_isSubmitting) {
+      return false;
+    }
+
+    final expenseId = _existingExpense?.id;
+
+    if (expenseId == null) {
+      _errorMessage = 'Unable to delete this expense.';
+      notifyListeners();
+      return false;
+    }
+
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _expenseRepository.deleteExpense(expenseId);
+      return true;
+    } catch (error, stackTrace) {
+      _errorMessage = 'Unable to delete the expense. Please try again.';
+
+      debugPrint('Failed to delete expense: $error');
       debugPrintStack(stackTrace: stackTrace);
 
       return false;

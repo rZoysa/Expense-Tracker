@@ -1,3 +1,4 @@
+import 'package:expense_tracker/models/expense.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -5,7 +6,9 @@ import '../models/expense_category.dart';
 import '../viewmodels/expense_form_view_model.dart';
 
 class ExpenseFormScreen extends StatefulWidget {
-  const ExpenseFormScreen({super.key});
+  const ExpenseFormScreen({super.key, this.expense});
+
+  final Expense? expense;
 
   @override
   State<ExpenseFormScreen> createState() => _ExpenseFormScreenState();
@@ -14,9 +17,22 @@ class ExpenseFormScreen extends StatefulWidget {
 class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _titleController = TextEditingController();
-  final _amountController = TextEditingController();
-  final _noteController = TextEditingController();
+  late final TextEditingController _titleController;
+  late final TextEditingController _amountController;
+  late final TextEditingController _noteController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _titleController = TextEditingController(text: widget.expense?.title ?? '');
+
+    _amountController = TextEditingController(
+      text: widget.expense?.amount.toStringAsFixed(2) ?? '',
+    );
+
+    _noteController = TextEditingController(text: widget.expense?.note ?? '');
+  }
 
   @override
   void dispose() {
@@ -42,6 +58,48 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     }
 
     context.read<ExpenseFormViewModel>().setDate(selectedDate);
+  }
+
+  Future<void> _deleteExpense() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete expense?'),
+          content: const Text('This expense will be permanently deleted.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true || !mounted) {
+      return;
+    }
+
+    final wasDeleted = await context
+        .read<ExpenseFormViewModel>()
+        .deleteExpense();
+
+    if (!mounted) {
+      return;
+    }
+
+    if (wasDeleted) {
+      Navigator.of(context).pop(widget.expense);
+    }
   }
 
   Future<void> _submit() async {
@@ -88,7 +146,18 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final viewModel = context.watch<ExpenseFormViewModel>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Expense')),
+      appBar: AppBar(
+        title: Text(viewModel.isEditing ? 'Edit Expense' : 'Add Expense'),
+        actions: [
+          if (viewModel.isEditing)
+            IconButton(
+              color: Colors.red,
+              onPressed: viewModel.isSubmitting ? null : _deleteExpense,
+              tooltip: 'Delete expense',
+              icon: const Icon(Icons.delete_outline),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -223,7 +292,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save Expense'),
+                      : Text(
+                          viewModel.isEditing
+                              ? 'Update Expense'
+                              : 'Save Expense',
+                        ),
                 ),
               ],
             ),

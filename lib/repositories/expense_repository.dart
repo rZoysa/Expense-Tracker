@@ -8,4 +8,6 @@ abstract class ExpenseRepository {
   Future<void> updateExpense(Expense expense);
 
   Future<void> deleteExpense(String expenseId);
+
+  Future<void> restoreExpense(Expense expense);
 }
