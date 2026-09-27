@@ -1,26 +1,35 @@
+import 'package:expense_tracker/models/app_theme_mode.dart';
 import 'package:expense_tracker/services/theme_preference_service.dart';
 import 'package:flutter/material.dart';
 
 class ThemeViewModel extends ChangeNotifier {
   ThemeViewModel({
     required this._themePreferenceService,
-    required bool initialDarkMode,
-  }) : _isDarkMode = initialDarkMode;
+    required AppThemeMode initialThemeMode,
+  }) : _selectedThemeMode = initialThemeMode;
 
   final ThemePreferenceService _themePreferenceService;
 
-  bool _isDarkMode;
+  AppThemeMode _selectedThemeMode;
 
-  bool get isDarkMode => _isDarkMode;
+  AppThemeMode get selectedThemeMode => _selectedThemeMode;
 
   ThemeMode get themeMode {
-    return _isDarkMode ? ThemeMode.dark : ThemeMode.light;
+    return switch (_selectedThemeMode) {
+      AppThemeMode.system => ThemeMode.system,
+      AppThemeMode.light => ThemeMode.light,
+      AppThemeMode.dark => ThemeMode.dark,
+    };
   }
 
-  Future<void> toggleTheme() async {
-    _isDarkMode = !_isDarkMode;
+  Future<void> setThemeMode(AppThemeMode themeMode) async {
+    if (_selectedThemeMode == themeMode) {
+      return;
+    }
+
+    _selectedThemeMode = themeMode;
     notifyListeners();
 
-    await _themePreferenceService.saveDarkMode(_isDarkMode);
+    await _themePreferenceService.saveThemeMode(themeMode);
   }
 }

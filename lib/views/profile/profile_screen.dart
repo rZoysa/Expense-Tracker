@@ -1,5 +1,6 @@
 import 'package:expense_tracker/viewmodels/auth_view_model.dart';
 import 'package:expense_tracker/views/profile/auth_form_screen.dart';
+import 'package:expense_tracker/views/profile/widgets/profile_settings_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -239,6 +240,8 @@ class _GuestProfile extends StatelessWidget {
             'Creating an account keeps this guest session and its expenses. Signing into an existing account switches to that account instead.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
+          SizedBox(height: 28.h),
+          const ProfileSettingsSection(),
         ],
       ),
     );
@@ -393,6 +396,8 @@ class _SignedInProfile extends StatelessWidget {
                 : const Icon(Icons.logout),
             label: const Text('Sign Out'),
           ),
+          SizedBox(height: 28.h),
+          const ProfileSettingsSection(),
         ],
       ),
     );

@@ -1,7 +1,6 @@
 import 'package:expense_tracker/repositories/expense_repository.dart';
 import 'package:expense_tracker/viewmodels/expense_form_view_model.dart';
 import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
-import 'package:expense_tracker/viewmodels/theme_view_model.dart';
 import 'package:expense_tracker/views/expense_dashboard_screen/widgets/category_spending_card.dart';
 import 'package:expense_tracker/views/expense_dashboard_screen/widgets/monthly_total_card.dart';
 import 'package:expense_tracker/views/expense_dashboard_screen/widgets/recent_expenses_list.dart';
@@ -40,20 +39,6 @@ class ExpenseDashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Expense Tracker'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              context.read<ThemeViewModel>().toggleTheme();
-            },
-            tooltip: 'Toggle theme',
-            icon: Icon(
-              Theme.of(context).brightness == Brightness.dark
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
-              size: 24.r,
-            ),
-          ),
-        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddExpense(context),

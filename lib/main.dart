@@ -1,6 +1,7 @@
 import 'package:expense_tracker/app/app_theme.dart';
 import 'package:expense_tracker/app/authenticated_expense_scope.dart';
 import 'package:expense_tracker/firebase_options.dart';
+import 'package:expense_tracker/models/app_theme_mode.dart';
 import 'package:expense_tracker/services/auth_service.dart';
 import 'package:expense_tracker/services/theme_preference_service.dart';
 import 'package:expense_tracker/viewmodels/auth_view_model.dart';
@@ -19,13 +20,13 @@ Future<void> main() async {
   await authService.signInAnonymouslyIfNeeded();
 
   final themePreferenceService = ThemePreferenceService();
-  final initialDarkMode = await themePreferenceService.loadDarkMode();
+  final initialThemeMode = await themePreferenceService.loadThemeMode();
 
   runApp(
     ExpenseTrackerApp(
       authService: authService,
       themePreferenceService: themePreferenceService,
-      initialDarkMode: initialDarkMode,
+      initialThemeMode: initialThemeMode,
     ),
   );
 }
@@ -34,13 +35,13 @@ class ExpenseTrackerApp extends StatelessWidget {
   const ExpenseTrackerApp({
     required this.authService,
     required this.themePreferenceService,
-    required this.initialDarkMode,
+    required this.initialThemeMode,
     super.key,
   });
 
   final AuthService authService;
   final ThemePreferenceService themePreferenceService;
-  final bool initialDarkMode;
+  final AppThemeMode initialThemeMode;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +58,7 @@ class ExpenseTrackerApp extends StatelessWidget {
             ChangeNotifierProvider(
               create: (_) => ThemeViewModel(
                 themePreferenceService: themePreferenceService,
-                initialDarkMode: initialDarkMode,
+                initialThemeMode: initialThemeMode,
               ),
             ),
           ],
