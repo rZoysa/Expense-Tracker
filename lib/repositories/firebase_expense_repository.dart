@@ -6,7 +6,6 @@ import 'package:expense_tracker/repositories/expense_repository.dart';
 class FirebaseExpenseRepository implements ExpenseRepository {
   FirebaseExpenseRepository({
     required this._userId,
-
     FirebaseFirestore? firestore,
   }) : _firestore = firestore ?? FirebaseFirestore.instance;
 

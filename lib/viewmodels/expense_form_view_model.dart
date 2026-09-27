@@ -5,12 +5,10 @@ import '../models/expense_category.dart';
 import '../repositories/expense_repository.dart';
 
 class ExpenseFormViewModel extends ChangeNotifier {
-  ExpenseFormViewModel({
-    required this._expenseRepository,
-    Expense? expense,
-  }) : _existingExpense = expense,
-       _selectedCategory = expense?.category ?? ExpenseCategory.food,
-       _selectedDate = expense?.date ?? DateTime.now();
+  ExpenseFormViewModel({required this._expenseRepository, Expense? expense})
+    : _existingExpense = expense,
+      _selectedCategory = expense?.category ?? ExpenseCategory.food,
+      _selectedDate = expense?.date ?? DateTime.now();
 
   final ExpenseRepository _expenseRepository;
   final Expense? _existingExpense;
