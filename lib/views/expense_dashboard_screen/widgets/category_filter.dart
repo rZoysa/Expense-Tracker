@@ -19,7 +19,9 @@ class CategoryFilter extends StatelessWidget {
       child: Row(
         children: [
           ChoiceChip(
+            avatar: const Icon(Icons.apps, size: 18),
             label: const Text('All'),
+            showCheckmark: false,
             selected: selectedCategory == null,
             onSelected: (_) => onSelected(null),
           ),
@@ -28,6 +30,8 @@ class CategoryFilter extends StatelessWidget {
             (category) => Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
+                avatar: Icon(category.icon, size: 18),
+                showCheckmark: false,
                 label: Text(category.label),
                 selected: selectedCategory == category,
                 onSelected: (_) => onSelected(category),

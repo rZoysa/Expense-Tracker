@@ -1,5 +1,5 @@
-import 'package:expense_tracker/extensions/expense_category_extension.dart';
 import 'package:expense_tracker/models/expense.dart';
+import 'package:expense_tracker/views/expense_dashboard_screen/widgets/expense_list_item.dart';
 import 'package:flutter/material.dart';
 
 class ExpenseList extends StatelessWidget {
@@ -15,22 +15,17 @@ class ExpenseList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+      padding: const EdgeInsets.only(top: 8, bottom: 96),
       itemCount: expenses.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
+      separatorBuilder: (_, _) {
+        return const Divider(height: 1, indent: 72);
+      },
       itemBuilder: (context, index) {
         final expense = expenses[index];
 
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
+        return ExpenseListItem(
+          expense: expense,
           onTap: () => onExpenseTap(expense),
-          title: Text(expense.title),
-          subtitle: Text(expense.category.label),
-          trailing: Text(
-            'LKR ${expense.amount.toStringAsFixed(2)}',
-            style: Theme.of(context).textTheme.bodyLarge
-                ?.copyWith(fontWeight: FontWeight.w600),
-          ),
         );
       },
     );

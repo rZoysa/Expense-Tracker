@@ -15,10 +15,7 @@ import 'package:provider/provider.dart';
 class ExpenseDashboardScreen extends StatelessWidget {
   const ExpenseDashboardScreen({super.key});
 
-  void _showDeletedSnackBar(
-    BuildContext context,
-    Expense deletedExpense,
-  ) {
+  void _showDeletedSnackBar(BuildContext context, Expense deletedExpense) {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     scaffoldMessenger.hideCurrentSnackBar();
@@ -57,19 +54,15 @@ class ExpenseDashboardScreen extends StatelessWidget {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider(
-          create: (_) => ExpenseFormViewModel(
-            expenseRepository: expenseRepository,
-          ),
+          create: (_) =>
+              ExpenseFormViewModel(expenseRepository: expenseRepository),
           child: const ExpenseFormScreen(),
         ),
       ),
     );
   }
 
-  Future<void> _openExpense(
-    BuildContext context,
-    Expense expense,
-  ) async {
+  Future<void> _openExpense(BuildContext context, Expense expense) async {
     final expenseRepository = context.read<ExpenseRepository>();
 
     final deletedExpense = await Navigator.of(context).push<Expense>(
@@ -79,9 +72,7 @@ class ExpenseDashboardScreen extends StatelessWidget {
             expenseRepository: expenseRepository,
             expense: expense,
           ),
-          child: ExpenseFormScreen(
-            expense: expense,
-          ),
+          child: ExpenseFormScreen(expense: expense),
         ),
       ),
     );
@@ -90,18 +81,13 @@ class ExpenseDashboardScreen extends StatelessWidget {
       return;
     }
 
-    _showDeletedSnackBar(
-      context,
-      deletedExpense,
-    );
+    _showDeletedSnackBar(context, deletedExpense);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Expense Tracker'),
-      ),
+      appBar: AppBar(title: const Text('Expense Tracker')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddExpense(context),
         icon: const Icon(Icons.add),
@@ -110,9 +96,7 @@ class ExpenseDashboardScreen extends StatelessWidget {
       body: Consumer<ExpenseListViewModel>(
         builder: (context, viewModel, child) {
           if (viewModel.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (viewModel.hasError) {
@@ -122,40 +106,41 @@ class ExpenseDashboardScreen extends StatelessWidget {
             );
           }
 
-          final filteredExpenses =
-              viewModel.filteredExpenses;
+          final filteredExpenses = viewModel.filteredExpenses;
 
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  8,
-                  16,
-                  0,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Column(
                   children: [
                     MonthSelector(
-                      selectedMonth:
-                          viewModel.selectedMonth,
-                      isCurrentMonth:
-                          viewModel.isCurrentMonth,
-                      onPrevious:
-                          viewModel.goToPreviousMonth,
-                      onNext:
-                          viewModel.goToNextMonth,
+                      selectedMonth: viewModel.selectedMonth,
+                      isCurrentMonth: viewModel.isCurrentMonth,
+                      onPrevious: viewModel.goToPreviousMonth,
+                      onNext: viewModel.goToNextMonth,
                     ),
                     const SizedBox(height: 8),
-                    MonthlyTotalCard(
-                      total: viewModel.monthlyTotal,
-                    ),
+                    MonthlyTotalCard(total: viewModel.monthlyTotal),
                     const SizedBox(height: 16),
                     CategoryFilter(
-                      selectedCategory:
-                          viewModel.selectedCategory,
-                      onSelected:
-                          viewModel.setCategoryFilter,
+                      selectedCategory: viewModel.selectedCategory,
+                      onSelected: viewModel.setCategoryFilter,
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Text(
+                          'Expenses',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${filteredExpenses.length}',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -174,10 +159,7 @@ class ExpenseDashboardScreen extends StatelessWidget {
                     : ExpenseList(
                         expenses: filteredExpenses,
                         onExpenseTap: (expense) {
-                          _openExpense(
-                            context,
-                            expense,
-                          );
+                          _openExpense(context, expense);
                         },
                       ),
               ),

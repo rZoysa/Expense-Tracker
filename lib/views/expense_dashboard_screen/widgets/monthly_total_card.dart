@@ -1,3 +1,4 @@
+import 'package:expense_tracker/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
 
 class MonthlyTotalCard extends StatelessWidget {
@@ -7,9 +8,12 @@ class MonthlyTotalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return SizedBox(
       width: double.infinity,
       child: Card(
+        color: colorScheme.primaryContainer,
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -17,13 +21,22 @@ class MonthlyTotalCard extends StatelessWidget {
             children: [
               Text(
                 'Total expenses',
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: colorScheme.onPrimaryContainer),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
-                'LKR ${total.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                CurrencyFormatter.formatLkr(total),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'For the selected month',
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: colorScheme.onPrimaryContainer),
               ),
             ],
           ),
