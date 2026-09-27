@@ -1,6 +1,15 @@
+import 'package:expense_tracker/firebase_options.dart';
+import 'package:expense_tracker/services/auth_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  final authservice = AuthService();
+  await authservice.signInAnonymouslyIfNeeded();
   runApp(const MyApp());
 }
 
