@@ -8,6 +8,8 @@ class AuthService {
 
   User? get currentUser => _firebaseAuth.currentUser;
 
+  Stream<User?> get userChanges => _firebaseAuth.userChanges();
+
   Future<User> signInAnonymouslyIfNeeded() async {
     final existingUser = _firebaseAuth.currentUser;
 

@@ -1,12 +1,10 @@
 import 'package:expense_tracker/app/app_theme.dart';
+import 'package:expense_tracker/app/authenticated_expense_scope.dart';
 import 'package:expense_tracker/firebase_options.dart';
-import 'package:expense_tracker/repositories/expense_repository.dart';
-import 'package:expense_tracker/repositories/firebase_expense_repository.dart';
 import 'package:expense_tracker/services/auth_service.dart';
 import 'package:expense_tracker/services/theme_preference_service.dart';
-import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
+import 'package:expense_tracker/viewmodels/auth_view_model.dart';
 import 'package:expense_tracker/viewmodels/theme_view_model.dart';
-import 'package:expense_tracker/views/main/main_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -18,17 +16,14 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final authService = AuthService();
-  final user = await authService.signInAnonymouslyIfNeeded();
-
-  final expenseRepository = FirebaseExpenseRepository(userId: user.uid);
+  await authService.signInAnonymouslyIfNeeded();
 
   final themePreferenceService = ThemePreferenceService();
-
   final initialDarkMode = await themePreferenceService.loadDarkMode();
 
   runApp(
     ExpenseTrackerApp(
-      expenseRepository: expenseRepository,
+      authService: authService,
       themePreferenceService: themePreferenceService,
       initialDarkMode: initialDarkMode,
     ),
@@ -37,13 +32,13 @@ Future<void> main() async {
 
 class ExpenseTrackerApp extends StatelessWidget {
   const ExpenseTrackerApp({
-    required this.expenseRepository,
+    required this.authService,
     required this.themePreferenceService,
     required this.initialDarkMode,
     super.key,
   });
 
-  final ExpenseRepository expenseRepository;
+  final AuthService authService;
   final ThemePreferenceService themePreferenceService;
   final bool initialDarkMode;
 
@@ -56,11 +51,8 @@ class ExpenseTrackerApp extends StatelessWidget {
       builder: (context, child) {
         return MultiProvider(
           providers: [
-            Provider<ExpenseRepository>.value(value: expenseRepository),
             ChangeNotifierProvider(
-              create: (context) => ExpenseListViewModel(
-                expenseRepository: context.read<ExpenseRepository>(),
-              ),
+              create: (_) => AuthViewModel(authService: authService),
             ),
             ChangeNotifierProvider(
               create: (_) => ThemeViewModel(
@@ -77,7 +69,7 @@ class ExpenseTrackerApp extends StatelessWidget {
                 theme: AppTheme.light,
                 darkTheme: AppTheme.dark,
                 themeMode: themeViewModel.themeMode,
-                home: const MainScreen(),
+                home: const AuthenticatedExpenseScope(),
               );
             },
           ),
