@@ -1,6 +1,7 @@
 import 'package:expense_tracker/extensions/expense_category_extension.dart';
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/models/expense_date_scope.dart';
+import 'package:expense_tracker/models/expense_form_result.dart';
 import 'package:expense_tracker/repositories/expense_repository.dart';
 import 'package:expense_tracker/viewmodels/expense_form_view_model.dart';
 import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
@@ -8,23 +9,33 @@ import 'package:expense_tracker/views/expense_form_screen.dart';
 import 'package:expense_tracker/views/shared/widgets/empty_state.dart';
 import 'package:expense_tracker/views/shared/widgets/error_state.dart';
 import 'package:expense_tracker/views/shared/widgets/expense_list.dart';
+import 'package:expense_tracker/views/shared/widgets/expense_list_skeleton.dart';
 import 'package:expense_tracker/views/shared/widgets/month_selector.dart';
+import 'package:expense_tracker/views/transaction_details/transaction_details_screen.dart';
 import 'package:expense_tracker/views/transactions/widgets/category_filter.dart';
 import 'package:expense_tracker/views/transactions/widgets/date_scope_selector.dart';
 import 'package:expense_tracker/views/transactions/widgets/selected_date_selector.dart';
 import 'package:expense_tracker/views/transactions/widgets/transaction_search_bar.dart';
-import 'package:expense_tracker/views/transactions/widgets/transactions_loading_skeleton.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
-class TransactionsScreen extends StatelessWidget {
+class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
+
+  @override
+  State<TransactionsScreen> createState() => _TransactionsScreenState();
+}
+
+class _TransactionsScreenState extends State<TransactionsScreen> {
+  bool _isFabExtended = true;
 
   Future<void> _openAddExpense(BuildContext context) async {
     final expenseRepository = context.read<ExpenseRepository>();
 
-    await Navigator.of(context).push<void>(
+    await Navigator.of(context).push<ExpenseFormResult>(
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider(
           create: (_) =>
@@ -44,17 +55,17 @@ class TransactionsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _openExpense(BuildContext context, Expense expense) async {
+  Future<void> _openExpenseDetails(
+    BuildContext context,
+    Expense expense,
+  ) async {
     final expenseRepository = context.read<ExpenseRepository>();
 
-    final deletedExpense = await Navigator.of(context).push<Expense>(
+    final result = await Navigator.of(context).push<ExpenseFormResult>(
       MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider(
-          create: (_) => ExpenseFormViewModel(
-            expenseRepository: expenseRepository,
-            expense: expense,
-          ),
-          child: ExpenseFormScreen(expense: expense),
+        builder: (_) => Provider<ExpenseRepository>.value(
+          value: expenseRepository,
+          child: TransactionDetailsScreen(expense: expense),
         ),
       ),
     );
@@ -68,11 +79,11 @@ class TransactionsScreen extends StatelessWidget {
       await viewModel.refreshAllTime();
     }
 
-    if (!context.mounted || deletedExpense == null) {
+    if (!context.mounted || result == null || !result.wasDeleted) {
       return;
     }
 
-    _showDeletedSnackBar(context, deletedExpense);
+    _showDeletedSnackBar(context, result.expense);
   }
 
   void _showDeletedSnackBar(BuildContext context, Expense deletedExpense) {
@@ -125,6 +136,14 @@ class TransactionsScreen extends StatelessWidget {
     }
 
     context.read<ExpenseListViewModel>().setSelectedDate(selectedDate);
+  }
+
+  Future<void> _handleRefresh(ExpenseListViewModel viewModel) async {
+    if (viewModel.dateScope == ExpenseDateScope.allTime) {
+      await viewModel.refreshAllTime();
+    } else {
+      await viewModel.retry();
+    }
   }
 
   String _emptyStateTitle(ExpenseListViewModel viewModel) {
@@ -229,35 +248,89 @@ class TransactionsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildCountIndicator(
+    BuildContext context,
+    ExpenseListViewModel viewModel,
+    bool isAllTime,
+    bool isLoading,
+  ) {
+    if (isLoading) {
+      return Skeletonizer.zone(child: Bone.text(width: 48.w));
+    }
+
+    final count = viewModel.filteredExpenses.length;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Text(
+        isAllTime ? '$count shown' : '$count',
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSecondaryContainer,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateScopeExtra(
+    BuildContext context,
+    ExpenseListViewModel viewModel,
+  ) {
+    return switch (viewModel.dateScope) {
+      ExpenseDateScope.month => Padding(
+        key: const ValueKey('month'),
+        padding: EdgeInsets.only(top: 12.h),
+        child: MonthSelector(
+          selectedMonth: viewModel.selectedMonth,
+          isCurrentMonth: viewModel.isCurrentMonth,
+          onPrevious: viewModel.goToPreviousMonth,
+          onNext: viewModel.goToNextMonth,
+        ),
+      ),
+      ExpenseDateScope.specificDate => Padding(
+        key: const ValueKey('date'),
+        padding: EdgeInsets.only(top: 12.h),
+        child: SelectedDateSelector(
+          selectedDate: viewModel.selectedDate,
+          onTap: () => _selectDate(context, viewModel),
+        ),
+      ),
+      ExpenseDateScope.allTime => const SizedBox.shrink(key: ValueKey('all')),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Transactions')),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'transactions_add_expense',
+        isExtended: _isFabExtended,
         onPressed: () => _openAddExpense(context),
         icon: Icon(Icons.add, size: 24.r),
         label: const Text('Add Expense'),
       ),
       body: Consumer<ExpenseListViewModel>(
         builder: (context, viewModel, child) {
-          if (viewModel.isTransactionsLoading) {
-            return const TransactionsLoadingSkeleton();
-          }
-
-          if (viewModel.hasTransactionsError) {
-            return ErrorState(
-              message: viewModel.transactionsErrorMessage!,
-              onRetry: viewModel.retry,
-            );
-          }
-
           final filteredExpenses = viewModel.filteredExpenses;
           final isAllTime = viewModel.dateScope == ExpenseDateScope.allTime;
+          final isLoading = viewModel.isTransactionsLoading;
 
           return Column(
             children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+              Container(
+                margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
                 child: Column(
                   children: [
                     TransactionSearchBar(
@@ -270,23 +343,16 @@ class TransactionsScreen extends StatelessWidget {
                       selectedScope: viewModel.dateScope,
                       onSelected: viewModel.setDateScope,
                     ),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutCubic,
+                      alignment: Alignment.topCenter,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: _buildDateScopeExtra(context, viewModel),
+                      ),
+                    ),
                     SizedBox(height: 12.h),
-                    if (viewModel.dateScope == ExpenseDateScope.month) ...[
-                      MonthSelector(
-                        selectedMonth: viewModel.selectedMonth,
-                        isCurrentMonth: viewModel.isCurrentMonth,
-                        onPrevious: viewModel.goToPreviousMonth,
-                        onNext: viewModel.goToNextMonth,
-                      ),
-                      SizedBox(height: 12.h),
-                    ] else if (viewModel.dateScope ==
-                        ExpenseDateScope.specificDate) ...[
-                      SelectedDateSelector(
-                        selectedDate: viewModel.selectedDate,
-                        onTap: () => _selectDate(context, viewModel),
-                      ),
-                      SizedBox(height: 12.h),
-                    ],
                     CategoryFilter(
                       selectedCategory: viewModel.selectedCategory,
                       onSelected: viewModel.setCategoryFilter,
@@ -300,11 +366,11 @@ class TransactionsScreen extends StatelessWidget {
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const Spacer(),
-                        Text(
-                          isAllTime
-                              ? '${filteredExpenses.length} shown'
-                              : '${filteredExpenses.length}',
-                          style: Theme.of(context).textTheme.bodyMedium,
+                        _buildCountIndicator(
+                          context,
+                          viewModel,
+                          isAllTime,
+                          isLoading,
                         ),
                       ],
                     ),
@@ -313,22 +379,46 @@ class TransactionsScreen extends StatelessWidget {
               ),
               SizedBox(height: 8.h),
               Expanded(
-                child: filteredExpenses.isEmpty
+                child: isLoading
+                    ? const ExpenseListSkeleton(itemCount: 7)
+                    : viewModel.hasTransactionsError
+                    ? ErrorState(
+                        message: viewModel.transactionsErrorMessage!,
+                        onRetry: viewModel.retry,
+                      )
+                    : filteredExpenses.isEmpty
                     ? _buildEmptyState(context, viewModel)
-                    : ExpenseList(
-                        expenses: filteredExpenses,
-                        onExpenseTap: (expense) {
-                          _openExpense(context, expense);
+                    : NotificationListener<UserScrollNotification>(
+                        onNotification: (notification) {
+                          if (notification.direction ==
+                                  ScrollDirection.reverse &&
+                              _isFabExtended) {
+                            setState(() => _isFabExtended = false);
+                          } else if (notification.direction ==
+                                  ScrollDirection.forward &&
+                              !_isFabExtended) {
+                            setState(() => _isFabExtended = true);
+                          }
+                          return false;
                         },
-                        hasMore: isAllTime && viewModel.hasMoreAllTime,
-                        isLoadingMore:
-                            isAllTime && viewModel.isLoadingMoreAllTime,
-                        loadMoreErrorMessage: isAllTime
-                            ? viewModel.allTimeLoadMoreErrorMessage
-                            : null,
-                        onLoadMore: isAllTime
-                            ? viewModel.loadMoreAllTime
-                            : null,
+                        child: RefreshIndicator(
+                          onRefresh: () => _handleRefresh(viewModel),
+                          child: ExpenseList(
+                            expenses: filteredExpenses,
+                            onExpenseTap: (expense) {
+                              _openExpenseDetails(context, expense);
+                            },
+                            hasMore: isAllTime && viewModel.hasMoreAllTime,
+                            isLoadingMore:
+                                isAllTime && viewModel.isLoadingMoreAllTime,
+                            loadMoreErrorMessage: isAllTime
+                                ? viewModel.allTimeLoadMoreErrorMessage
+                                : null,
+                            onLoadMore: isAllTime
+                                ? viewModel.loadMoreAllTime
+                                : null,
+                          ),
+                        ),
                       ),
               ),
             ],

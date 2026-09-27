@@ -18,6 +18,7 @@ class ExpenseFormViewModel extends ChangeNotifier {
 
   bool _isSubmitting = false;
   String? _errorMessage;
+  Expense? _lastSavedExpense;
 
   ExpenseCategory get selectedCategory => _selectedCategory;
 
@@ -26,6 +27,8 @@ class ExpenseFormViewModel extends ChangeNotifier {
   bool get isSubmitting => _isSubmitting;
 
   String? get errorMessage => _errorMessage;
+
+  Expense? get lastSavedExpense => _lastSavedExpense;
 
   bool get isEditing => _existingExpense != null;
 
@@ -78,6 +81,7 @@ class ExpenseFormViewModel extends ChangeNotifier {
         await _expenseRepository.addExpense(expense);
       }
 
+      _lastSavedExpense = expense;
       return true;
     } catch (error, stackTrace) {
       _errorMessage = isEditing

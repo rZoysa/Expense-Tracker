@@ -1,10 +1,11 @@
+import 'package:expense_tracker/extensions/expense_category_extension.dart';
 import 'package:expense_tracker/models/expense.dart';
+import 'package:expense_tracker/models/expense_category.dart';
+import 'package:expense_tracker/models/expense_form_result.dart';
+import 'package:expense_tracker/viewmodels/expense_form_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-
-import '../models/expense_category.dart';
-import '../viewmodels/expense_form_view_model.dart';
 
 class ExpenseFormScreen extends StatefulWidget {
   const ExpenseFormScreen({super.key, this.expense});
@@ -27,11 +28,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     super.initState();
 
     _titleController = TextEditingController(text: widget.expense?.title ?? '');
-
     _amountController = TextEditingController(
       text: widget.expense?.amount.toStringAsFixed(2) ?? '',
     );
-
     _noteController = TextEditingController(text: widget.expense?.note ?? '');
   }
 
@@ -40,7 +39,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     _titleController.dispose();
     _amountController.dispose();
     _noteController.dispose();
-
     super.dispose();
   }
 
@@ -52,6 +50,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       initialDate: viewModel.selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
+      helpText: 'Select expense date',
     );
 
     if (selectedDate == null || !mounted) {
@@ -67,18 +66,16 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Delete expense?'),
-          content: const Text('This expense will be permanently deleted.'),
+          content: const Text(
+            'This expense will be permanently deleted. You can undo it from the transactions screen for a few seconds.',
+          ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('Delete'),
             ),
           ],
@@ -94,13 +91,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         .read<ExpenseFormViewModel>()
         .deleteExpense();
 
-    if (!mounted) {
+    if (!mounted || !wasDeleted || widget.expense == null) {
       return;
     }
 
-    if (wasDeleted) {
-      Navigator.of(context).pop(widget.expense);
-    }
+    Navigator.of(context).pop(ExpenseFormResult.deleted(widget.expense!));
   }
 
   Future<void> _submit() async {
@@ -110,9 +105,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       return;
     }
 
-    final amount = double.parse(_amountController.text.trim());
-
     final viewModel = context.read<ExpenseFormViewModel>();
+    final amount = double.parse(_amountController.text.trim());
 
     final wasSaved = await viewModel.saveExpense(
       title: _titleController.text,
@@ -120,193 +114,341 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       note: _noteController.text,
     );
 
-    if (!mounted) {
+    if (!mounted || !wasSaved || viewModel.lastSavedExpense == null) {
       return;
     }
 
-    if (wasSaved) {
-      Navigator.of(context).pop();
-    }
-  }
-
-  String _categoryLabel(ExpenseCategory category) {
-    return switch (category) {
-      ExpenseCategory.food => 'Food',
-      ExpenseCategory.transport => 'Transport',
-      ExpenseCategory.shopping => 'Shopping',
-      ExpenseCategory.bills => 'Bills',
-      ExpenseCategory.entertainment => 'Entertainment',
-      ExpenseCategory.health => 'Health',
-      ExpenseCategory.education => 'Education',
-      ExpenseCategory.other => 'Other',
-    };
+    Navigator.of(context)
+        .pop(ExpenseFormResult.saved(viewModel.lastSavedExpense!));
   }
 
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<ExpenseFormViewModel>();
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(viewModel.isEditing ? 'Edit Expense' : 'Add Expense'),
+        title: Text(viewModel.isEditing ? 'Edit expense' : 'Add expense'),
         actions: [
           if (viewModel.isEditing)
             IconButton(
-              color: Colors.red,
               onPressed: viewModel.isSubmitting ? null : _deleteExpense,
               tooltip: 'Delete expense',
-              icon: Icon(Icons.delete_outline, size: 24.r),
+              icon: Icon(
+                Icons.delete_outline,
+                size: 24.r,
+                color: colorScheme.error,
+              ),
             ),
         ],
       ),
       body: SafeArea(
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(16.w),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _titleController,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Title',
-                      hintText: 'e.g. Lunch',
-                      border: OutlineInputBorder(),
-                    ),
-                    textCapitalization: .sentences,
-                    validator: (value) {
-                      final title = value?.trim() ?? '';
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
+              children: [
+                _FormHeader(isEditing: viewModel.isEditing),
+                SizedBox(height: 20.h),
+                _FormSectionCard(
+                  title: 'Expense details',
+                  icon: Icons.receipt_long_outlined,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _titleController,
+                        textInputAction: TextInputAction.next,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          labelText: 'Title',
+                          hintText: 'e.g. Team lunch',
+                          prefixIcon: Icon(Icons.edit_outlined),
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          final title = value?.trim() ?? '';
 
-                      if (title.isEmpty) {
-                        return 'Please enter a title.';
-                      }
+                          if (title.isEmpty) {
+                            return 'Please enter a title.';
+                          }
 
-                      if (title.length > 60) {
-                        return 'Title must be 60 characters or fewer.';
-                      }
+                          if (title.length > 60) {
+                            return 'Title must be 60 characters or fewer.';
+                          }
 
-                      return null;
-                    },
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 16.h),
+                      TextFormField(
+                        controller: _amountController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Amount',
+                          hintText: '0.00',
+                          prefixIcon: Icon(Icons.payments_outlined),
+                          prefixText: 'LKR ',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          final input = value?.trim() ?? '';
+
+                          if (input.isEmpty) {
+                            return 'Please enter an amount.';
+                          }
+
+                          final amount = double.tryParse(input);
+
+                          if (amount == null) {
+                            return 'Please enter a valid amount.';
+                          }
+
+                          if (amount <= 0) {
+                            return 'Amount must be greater than zero.';
+                          }
+
+                          return null;
+                        },
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 16.h),
-                  TextFormField(
-                    controller: _amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      hintText: '0.00',
-                      prefixText: 'LKR ',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      final input = value?.trim() ?? '';
-
-                      if (input.isEmpty) {
-                        return 'Please enter an amount.';
-                      }
-
-                      final amount = double.tryParse(input);
-
-                      if (amount == null) {
-                        return 'Please enter a valid amount.';
-                      }
-
-                      if (amount <= 0) {
-                        return 'Amount must be greater than zero.';
-                      }
-
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16.h),
-                  DropdownButtonFormField<ExpenseCategory>(
-                    initialValue: viewModel.selectedCategory,
-                    decoration: const InputDecoration(
-                      labelText: 'Category',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: ExpenseCategory.values
-                        .map(
-                          (category) => DropdownMenuItem(
-                            value: category,
-                            child: Text(_categoryLabel(category)),
+                ),
+                SizedBox(height: 16.h),
+                _FormSectionCard(
+                  title: 'Category & date',
+                  icon: Icons.tune_outlined,
+                  child: Column(
+                    children: [
+                      DropdownButtonFormField<ExpenseCategory>(
+                        initialValue: viewModel.selectedCategory,
+                        decoration: const InputDecoration(
+                          labelText: 'Category',
+                          prefixIcon: Icon(Icons.category_outlined),
+                          border: OutlineInputBorder(),
+                        ),
+                        items: ExpenseCategory.values
+                            .map(
+                              (category) => DropdownMenuItem(
+                                value: category,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(category.icon, size: 20.r),
+                                    SizedBox(width: 10.w),
+                                    Text(category.label),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: viewModel.isSubmitting
+                            ? null
+                            : (category) {
+                                if (category != null) {
+                                  context
+                                      .read<ExpenseFormViewModel>()
+                                      .setCategory(category);
+                                }
+                              },
+                      ),
+                      SizedBox(height: 16.h),
+                      InkWell(
+                        onTap: viewModel.isSubmitting ? null : _pickDate,
+                        borderRadius: BorderRadius.circular(12.r),
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Date',
+                            prefixIcon: Icon(Icons.calendar_today_outlined),
+                            suffixIcon: Icon(Icons.chevron_right),
+                            border: OutlineInputBorder(),
                           ),
-                        )
-                        .toList(),
-                    onChanged: viewModel.isSubmitting
-                        ? null
-                        : (category) {
-                            if (category != null) {
-                              context.read<ExpenseFormViewModel>().setCategory(
-                                category,
-                              );
-                            }
-                          },
-                  ),
-                  SizedBox(height: 16.h),
-                  InkWell(
-                    onTap: viewModel.isSubmitting ? null : _pickDate,
-                    borderRadius: BorderRadius.circular(4.r),
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Date',
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.calendar_today_outlined),
+                          child: Text(
+                            MaterialLocalizations.of(context)
+                                .formatMediumDate(viewModel.selectedDate),
+                          ),
+                        ),
                       ),
-                      child: Text(
-                        MaterialLocalizations.of(context)
-                            .formatMediumDate(viewModel.selectedDate),
-                      ),
-                    ),
+                    ],
                   ),
-                  SizedBox(height: 16.h),
-                  TextFormField(
+                ),
+                SizedBox(height: 16.h),
+                _FormSectionCard(
+                  title: 'Note',
+                  icon: Icons.notes_outlined,
+                  child: TextFormField(
                     controller: _noteController,
-                    maxLines: 3,
+                    minLines: 3,
+                    maxLines: 5,
                     maxLength: 200,
-                    textCapitalization: .sentences,
+                    textCapitalization: TextCapitalization.sentences,
                     decoration: const InputDecoration(
-                      labelText: 'Note',
-                      hintText: 'Optional description',
+                      hintText: 'Add an optional note or description',
                       alignLabelWithHint: true,
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  if (viewModel.errorMessage != null) ...[
-                    SizedBox(height: 8.h),
-                    Text(
-                      viewModel.errorMessage!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                ),
+                if (viewModel.errorMessage != null) ...[
+                  SizedBox(height: 16.h),
+                  Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
-                  ],
-                  SizedBox(height: 24.h),
-                  FilledButton(
-                    onPressed: viewModel.isSubmitting ? null : _submit,
-                    child: viewModel.isSubmitting
-                        ? SizedBox(
-                            width: 20.r,
-                            height: 20.r,
-                            child: CircularProgressIndicator(strokeWidth: 2.r),
-                          )
-                        : Text(
-                            viewModel.isEditing
-                                ? 'Update Expense'
-                                : 'Save Expense',
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 20.r,
+                          color: colorScheme.onErrorContainer,
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Text(
+                            viewModel.errorMessage!,
+                            style: TextStyle(
+                              color: colorScheme.onErrorContainer,
+                            ),
                           ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 12.h),
+          child: SizedBox(
+            height: 52.h,
+            child: FilledButton.icon(
+              onPressed: viewModel.isSubmitting ? null : _submit,
+              icon: viewModel.isSubmitting
+                  ? SizedBox(
+                      width: 20.r,
+                      height: 20.r,
+                      child: CircularProgressIndicator(strokeWidth: 2.r),
+                    )
+                  : Icon(
+                      viewModel.isEditing
+                          ? Icons.check_circle_outline
+                          : Icons.add_circle_outline,
+                      size: 22.r,
+                    ),
+              label: Text(viewModel.isEditing ? 'Save changes' : 'Add expense'),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FormHeader extends StatelessWidget {
+  const _FormHeader({required this.isEditing});
+
+  final bool isEditing;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48.r,
+            height: 48.r,
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isEditing ? Icons.edit_outlined : Icons.add_card_outlined,
+              color: colorScheme.onPrimary,
+              size: 24.r,
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isEditing ? 'Update transaction' : 'Record a new expense',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  isEditing ? 'Make the changes you need and save them.' : 'Add the important details now. You can edit them later.',
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: colorScheme.onPrimaryContainer),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FormSectionCard extends StatelessWidget {
+  const _FormSectionCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
+
+  final String title;
+  final IconData icon;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 20.r),
+                SizedBox(width: 8.w),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            child,
+          ],
         ),
       ),
     );

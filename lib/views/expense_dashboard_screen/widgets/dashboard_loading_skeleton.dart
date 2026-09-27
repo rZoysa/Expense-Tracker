@@ -8,21 +8,9 @@ class DashboardLoadingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 104.h),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Skeletonizer.zone(
-          child: Row(
-            children: [
-              Bone.iconButton(size: 24.r),
-              const Spacer(),
-              Bone.text(width: 128.w),
-              const Spacer(),
-              Bone.iconButton(size: 24.r),
-            ],
-          ),
-        ),
-        SizedBox(height: 8.h),
         Skeletonizer.zone(
           child: Card(
             child: Padding(
@@ -77,14 +65,16 @@ class DashboardLoadingSkeleton extends StatelessWidget {
           ),
         ),
         SizedBox(height: 24.h),
-        Skeletonizer.zone(
-          child: Row(
-            children: [
-              Bone.text(width: 122.w),
-              const Spacer(),
-              Bone.text(width: 56.w),
-            ],
-          ),
+        Row(
+          children: [
+            Text(
+              'Recent expenses',
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+            const TextButton(onPressed: null, child: Text('View all')),
+          ],
         ),
         SizedBox(height: 4.h),
         Card(

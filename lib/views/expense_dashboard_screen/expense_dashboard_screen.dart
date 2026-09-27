@@ -40,26 +40,13 @@ class ExpenseDashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Expense Tracker')),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'dashboard_add_expense',
         onPressed: () => _openAddExpense(context),
         icon: Icon(Icons.add, size: 24.r),
         label: const Text('Add Expense'),
       ),
       body: Consumer<ExpenseListViewModel>(
         builder: (context, viewModel, child) {
-          if (viewModel.isLoading) {
-            return const DashboardLoadingSkeleton();
-          }
-
-          if (viewModel.hasError) {
-            return ErrorState(
-              message: viewModel.errorMessage!,
-              onRetry: viewModel.retry,
-            );
-          }
-
-          final recentExpenses = viewModel.recentExpenses;
-          final selectedMonthExpenses = viewModel.selectedMonthExpenses;
-
           return ListView(
             padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 104.h),
             children: [
@@ -70,50 +57,65 @@ class ExpenseDashboardScreen extends StatelessWidget {
                 onNext: viewModel.goToNextMonth,
               ),
               SizedBox(height: 8.h),
-              MonthlyTotalCard(total: viewModel.monthlyTotal),
-              SizedBox(height: 16.h),
-              CategorySpendingCard(
-                summaries: viewModel.categorySummary,
-                total: viewModel.monthlyTotal,
-              ),
-              SizedBox(height: 24.h),
-              Row(
-                children: [
-                  Text(
-                    'Recent expenses',
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: onViewAllTransactions,
-                    child: const Text('View all'),
-                  ),
-                ],
-              ),
-              SizedBox(height: 4.h),
-              if (recentExpenses.isEmpty)
+              if (viewModel.isLoading)
+                const DashboardLoadingSkeleton()
+              else if (viewModel.hasError)
                 SizedBox(
-                  height: 220.h,
-                  child: const EmptyState(
-                    title: 'No expenses this month',
-                    message: 'Choose another month or add a new expense.',
+                  height: 420.h,
+                  child: ErrorState(
+                    message: viewModel.errorMessage!,
+                    onRetry: viewModel.retry,
                   ),
                 )
-              else
-                Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: RecentExpensesList(expenses: recentExpenses),
+              else ...[
+                MonthlyTotalCard(total: viewModel.monthlyTotal),
+                SizedBox(height: 16.h),
+                CategorySpendingCard(
+                  summaries: viewModel.categorySummary,
+                  total: viewModel.monthlyTotal,
                 ),
-              if (selectedMonthExpenses.length > recentExpenses.length) ...[
-                SizedBox(height: 8.h),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    '${selectedMonthExpenses.length - recentExpenses.length} more transaction${selectedMonthExpenses.length - recentExpenses.length == 1 ? '' : 's'} this month',
-                    style: Theme.of(context).textTheme.bodySmall,
+                SizedBox(height: 24.h),
+                Row(
+                  children: [
+                    Text(
+                      'Recent expenses',
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: onViewAllTransactions,
+                      child: const Text('View all'),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4.h),
+                if (viewModel.recentExpenses.isEmpty)
+                  SizedBox(
+                    height: 220.h,
+                    child: const EmptyState(
+                      title: 'No expenses this month',
+                      message: 'Choose another month or add a new expense.',
+                    ),
+                  )
+                else
+                  Card(
+                    clipBehavior: Clip.antiAlias,
+                    child: RecentExpensesList(
+                      expenses: viewModel.recentExpenses,
+                    ),
                   ),
-                ),
+                if (viewModel.selectedMonthExpenses.length >
+                    viewModel.recentExpenses.length) ...[
+                  SizedBox(height: 8.h),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${viewModel.selectedMonthExpenses.length - viewModel.recentExpenses.length} more transaction${viewModel.selectedMonthExpenses.length - viewModel.recentExpenses.length == 1 ? '' : 's'} this month',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
               ],
             ],
           );
