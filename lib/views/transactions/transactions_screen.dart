@@ -8,6 +8,7 @@ import 'package:expense_tracker/views/shared/widgets/error_state.dart';
 import 'package:expense_tracker/views/shared/widgets/expense_list.dart';
 import 'package:expense_tracker/views/shared/widgets/month_selector.dart';
 import 'package:expense_tracker/views/transactions/widgets/category_filter.dart';
+import 'package:expense_tracker/views/transactions/widgets/transaction_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -84,6 +85,38 @@ class TransactionsScreen extends StatelessWidget {
     );
   }
 
+  String _emptyStateTitle(ExpenseListViewModel viewModel) {
+    if (viewModel.expenses.isEmpty) {
+      return 'No expenses yet';
+    }
+
+    if (viewModel.hasSearchQuery) {
+      return 'No search results';
+    }
+
+    if (viewModel.selectedMonthExpenses.isEmpty) {
+      return 'No expenses this month';
+    }
+
+    return 'No matching expenses';
+  }
+
+  String _emptyStateMessage(ExpenseListViewModel viewModel) {
+    if (viewModel.expenses.isEmpty) {
+      return 'Add your first expense to get started.';
+    }
+
+    if (viewModel.hasSearchQuery) {
+      return 'No transactions match "${viewModel.searchQuery.trim()}".';
+    }
+
+    if (viewModel.selectedMonthExpenses.isEmpty) {
+      return 'There are no expenses for the selected month.';
+    }
+
+    return 'There are no expenses matching the selected category.';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,6 +147,12 @@ class TransactionsScreen extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
                 child: Column(
                   children: [
+                    TransactionSearchBar(
+                      searchQuery: viewModel.searchQuery,
+                      onChanged: viewModel.setSearchQuery,
+                      onClear: viewModel.clearSearchQuery,
+                    ),
+                    SizedBox(height: 16.h),
                     MonthSelector(
                       selectedMonth: viewModel.selectedMonth,
                       isCurrentMonth: viewModel.isCurrentMonth,
@@ -147,12 +186,8 @@ class TransactionsScreen extends StatelessWidget {
               Expanded(
                 child: filteredExpenses.isEmpty
                     ? EmptyState(
-                        title: viewModel.expenses.isEmpty
-                            ? 'No expenses yet'
-                            : 'No matching expenses',
-                        message: viewModel.expenses.isEmpty
-                            ? 'Add your first expense to get started.'
-                            : 'There are no expenses matching the selected month and category.',
+                        title: _emptyStateTitle(viewModel),
+                        message: _emptyStateMessage(viewModel),
                       )
                     : ExpenseList(
                         expenses: filteredExpenses,

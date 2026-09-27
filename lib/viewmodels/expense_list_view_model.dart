@@ -20,9 +20,14 @@ class ExpenseListViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   ExpenseCategory? _selectedCategory;
+  String _searchQuery = '';
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
   ExpenseCategory? get selectedCategory => _selectedCategory;
+
+  String get searchQuery => _searchQuery;
+
+  bool get hasSearchQuery => _searchQuery.trim().isNotEmpty;
 
   DateTime get selectedMonth => _selectedMonth;
 
@@ -53,8 +58,20 @@ class ExpenseListViewModel extends ChangeNotifier {
   }
 
   List<Expense> get filteredExpenses {
+    final normalizedSearchQuery = _searchQuery.trim().toLowerCase();
+
     return selectedMonthExpenses.where((expense) {
-      return _selectedCategory == null || expense.category == _selectedCategory;
+      final matchesCategory =
+          _selectedCategory == null || expense.category == _selectedCategory;
+
+      final matchesSearch =
+          normalizedSearchQuery.isEmpty ||
+          expense.title.toLowerCase().contains(normalizedSearchQuery) ||
+          (expense.note?.toLowerCase().contains(normalizedSearchQuery) ??
+              false) ||
+          expense.category.name.toLowerCase().contains(normalizedSearchQuery);
+
+      return matchesCategory && matchesSearch;
     }).toList();
   }
 
@@ -111,6 +128,19 @@ class ExpenseListViewModel extends ChangeNotifier {
 
   void clearCategoryFilter() {
     setCategoryFilter(null);
+  }
+
+  void setSearchQuery(String query) {
+    if (_searchQuery == query) {
+      return;
+    }
+
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  void clearSearchQuery() {
+    setSearchQuery('');
   }
 
   Future<void> retry() async {

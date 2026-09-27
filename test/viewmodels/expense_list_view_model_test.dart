@@ -157,6 +157,154 @@ void main() {
       ]);
     });
 
+    test('searches expenses by title case-insensitively', () {
+      final selectedMonth = viewModel.selectedMonth;
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Team Lunch',
+          amount: 1800,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 20),
+        ),
+        _expense(
+          id: '2',
+          title: 'Fuel',
+          amount: 5000,
+          category: ExpenseCategory.transport,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 18),
+        ),
+      ]);
+
+      viewModel.setSearchQuery('LUNCH');
+
+      expect(viewModel.filteredExpenses, hasLength(1));
+      expect(viewModel.filteredExpenses.single.title, 'Team Lunch');
+    });
+
+    test('searches expenses by note', () {
+      final selectedMonth = viewModel.selectedMonth;
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Lunch',
+          amount: 1800,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 20),
+          note: 'Meeting with design team',
+        ),
+        _expense(
+          id: '2',
+          title: 'Fuel',
+          amount: 5000,
+          category: ExpenseCategory.transport,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 18),
+        ),
+      ]);
+
+      viewModel.setSearchQuery('design');
+
+      expect(viewModel.filteredExpenses, hasLength(1));
+      expect(viewModel.filteredExpenses.single.title, 'Lunch');
+    });
+
+    test('searches expenses by category name', () {
+      final selectedMonth = viewModel.selectedMonth;
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Lunch',
+          amount: 1800,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 20),
+        ),
+        _expense(
+          id: '2',
+          title: 'Fuel',
+          amount: 5000,
+          category: ExpenseCategory.transport,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 18),
+        ),
+      ]);
+
+      viewModel.setSearchQuery('transport');
+
+      expect(viewModel.filteredExpenses, hasLength(1));
+      expect(viewModel.filteredExpenses.single.title, 'Fuel');
+    });
+
+    test('combines search query with category filter', () {
+      final selectedMonth = viewModel.selectedMonth;
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Lunch',
+          amount: 1800,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 20),
+          note: 'Team meeting',
+        ),
+        _expense(
+          id: '2',
+          title: 'Taxi',
+          amount: 1500,
+          category: ExpenseCategory.transport,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 18),
+          note: 'Team meeting transport',
+        ),
+      ]);
+
+      viewModel.setSearchQuery('team');
+      viewModel.setCategoryFilter(ExpenseCategory.food);
+
+      expect(viewModel.filteredExpenses, hasLength(1));
+      expect(viewModel.filteredExpenses.single.title, 'Lunch');
+    });
+
+    test('clearing search restores category-filtered results', () {
+      final selectedMonth = viewModel.selectedMonth;
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'Lunch',
+          amount: 1800,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 20),
+        ),
+        _expense(
+          id: '2',
+          title: 'Groceries',
+          amount: 4000,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 18),
+        ),
+        _expense(
+          id: '3',
+          title: 'Fuel',
+          amount: 5000,
+          category: ExpenseCategory.transport,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 16),
+        ),
+      ]);
+
+      viewModel.setCategoryFilter(ExpenseCategory.food);
+      viewModel.setSearchQuery('lunch');
+
+      expect(viewModel.filteredExpenses, hasLength(1));
+      expect(viewModel.hasSearchQuery, isTrue);
+
+      viewModel.clearSearchQuery();
+
+      expect(viewModel.searchQuery, isEmpty);
+      expect(viewModel.hasSearchQuery, isFalse);
+      expect(viewModel.filteredExpenses, hasLength(2));
+    });
+
     test('switches to previous month', () {
       final now = DateTime.now();
 
@@ -226,6 +374,7 @@ Expense _expense({
   required double amount,
   required ExpenseCategory category,
   required DateTime date,
+  String? note,
 }) {
   return Expense(
     id: id,
@@ -233,6 +382,7 @@ Expense _expense({
     amount: amount,
     category: category,
     date: date,
+    note: note,
     createdAt: date,
     updatedAt: date,
   );
