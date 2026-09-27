@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:expense_tracker/models/expense_category.dart';
+import 'package:flutter/material.dart';
 
 import '../models/expense.dart';
 import '../repositories/expense_repository.dart';
@@ -18,6 +19,13 @@ class ExpenseListViewModel extends ChangeNotifier {
   bool _isLoading = true;
   String? _errorMessage;
 
+  ExpenseCategory? _selectedCategory;
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+
+  ExpenseCategory? get selectedCategory => _selectedCategory;
+
+  DateTime get selectedMonth => _selectedMonth;
+
   List<Expense> get expenses => List.unmodifiable(_expenses);
 
   bool get isLoading => _isLoading;
@@ -27,6 +35,32 @@ class ExpenseListViewModel extends ChangeNotifier {
   bool get hasError => _errorMessage != null;
 
   bool get isEmpty => !_isLoading && !hasError && _expenses.isEmpty;
+
+  bool get isCurrentMonth {
+    final now = DateTime.now();
+
+    return DateUtils.isSameMonth(_selectedMonth, now);
+  }
+
+  List<Expense> get filteredExpenses {
+    return _expenses.where((expense) {
+      final isInSelectedMonth = DateUtils.isSameMonth(
+        expense.date,
+        _selectedMonth,
+      );
+
+      final matchesCategory =
+          _selectedCategory == null || expense.category == _selectedCategory;
+
+      return isInSelectedMonth && matchesCategory;
+    }).toList();
+  }
+
+  double get monthlyTotal {
+    return _expenses
+        .where((expense) => DateUtils.isSameMonth(expense.date, _selectedMonth))
+        .fold(0.0, (total, expense) => total + expense.amount);
+  }
 
   void _watchExpenses() {
     _isLoading = true;
@@ -64,10 +98,53 @@ class ExpenseListViewModel extends ChangeNotifier {
     }
   }
 
+  void setCategoryFilter(ExpenseCategory? category) {
+    if (_selectedCategory == category) {
+      return;
+    }
+
+    _selectedCategory = category;
+    notifyListeners();
+  }
+
+  void clearCategoryFilter() {
+    setCategoryFilter(null);
+  }
+
   Future<void> retry() async {
     await _expenseSubscription?.cancel();
     _watchExpenses();
 
+    notifyListeners();
+  }
+
+  void goToPreviousMonth() {
+    _selectedMonth = DateUtils.addMonthsToMonthDate(_selectedMonth, -1);
+
+    notifyListeners();
+  }
+
+  void goToNextMonth() {
+    final nextMonth = DateUtils.addMonthsToMonthDate(_selectedMonth, 1);
+
+    final currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
+
+    if (nextMonth.isAfter(currentMonth)) {
+      return;
+    }
+
+    _selectedMonth = nextMonth;
+    notifyListeners();
+  }
+
+  void goToCurrentMonth() {
+    final currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
+
+    if (DateUtils.isSameMonth(_selectedMonth, currentMonth)) {
+      return;
+    }
+
+    _selectedMonth = currentMonth;
     notifyListeners();
   }
 

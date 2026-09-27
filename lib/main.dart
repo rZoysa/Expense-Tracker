@@ -3,7 +3,7 @@ import 'package:expense_tracker/repositories/expense_repository.dart';
 import 'package:expense_tracker/repositories/firebase_expense_repository.dart';
 import 'package:expense_tracker/services/auth_service.dart';
 import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
-import 'package:expense_tracker/views/expense_dashboard_screen.dart';
+import 'package:expense_tracker/views/expense_dashboard_screen/expense_dashboard_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
