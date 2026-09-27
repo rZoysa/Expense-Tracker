@@ -42,17 +42,19 @@ class ExpenseListViewModel extends ChangeNotifier {
     return DateUtils.isSameMonth(_selectedMonth, now);
   }
 
+  List<Expense> get selectedMonthExpenses {
+    return _expenses
+        .where((expense) => DateUtils.isSameMonth(expense.date, _selectedMonth))
+        .toList();
+  }
+
+  List<Expense> get recentExpenses {
+    return selectedMonthExpenses.take(3).toList();
+  }
+
   List<Expense> get filteredExpenses {
-    return _expenses.where((expense) {
-      final isInSelectedMonth = DateUtils.isSameMonth(
-        expense.date,
-        _selectedMonth,
-      );
-
-      final matchesCategory =
-          _selectedCategory == null || expense.category == _selectedCategory;
-
-      return isInSelectedMonth && matchesCategory;
+    return selectedMonthExpenses.where((expense) {
+      return _selectedCategory == null || expense.category == _selectedCategory;
     }).toList();
   }
 

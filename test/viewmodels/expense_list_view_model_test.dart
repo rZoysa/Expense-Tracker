@@ -111,6 +111,52 @@ void main() {
       },
     );
 
+    test('recent expenses ignore category filter and are limited to three', () {
+      final selectedMonth = viewModel.selectedMonth;
+
+      repository.emitExpenses([
+        _expense(
+          id: '1',
+          title: 'First',
+          amount: 1000,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 20),
+        ),
+        _expense(
+          id: '2',
+          title: 'Second',
+          amount: 2000,
+          category: ExpenseCategory.transport,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 18),
+        ),
+        _expense(
+          id: '3',
+          title: 'Third',
+          amount: 3000,
+          category: ExpenseCategory.food,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 15),
+        ),
+        _expense(
+          id: '4',
+          title: 'Fourth',
+          amount: 4000,
+          category: ExpenseCategory.bills,
+          date: DateTime(selectedMonth.year, selectedMonth.month, 10),
+        ),
+      ]);
+
+      viewModel.setCategoryFilter(ExpenseCategory.food);
+
+      expect(viewModel.filteredExpenses, hasLength(2));
+      expect(viewModel.selectedMonthExpenses, hasLength(4));
+      expect(viewModel.recentExpenses, hasLength(3));
+      expect(viewModel.recentExpenses.map((expense) => expense.title), [
+        'First',
+        'Second',
+        'Third',
+      ]);
+    });
+
     test('switches to previous month', () {
       final now = DateTime.now();
 

@@ -14,12 +14,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = [
-    ExpenseDashboardScreen(),
-    TransactionsScreen(),
-    ProfileScreen(),
-  ];
-
   void _onDestinationSelected(int index) {
     if (_selectedIndex == index) {
       return;
@@ -32,8 +26,16 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      ExpenseDashboardScreen(
+        onViewAllTransactions: () => _onDestinationSelected(1),
+      ),
+      const TransactionsScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _pages),
+      body: IndexedStack(index: _selectedIndex, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onDestinationSelected,
