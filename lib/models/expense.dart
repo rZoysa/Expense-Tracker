@@ -2,7 +2,7 @@ import 'package:expense_tracker/models/expense_category.dart';
 
 class Expense {
   const Expense({
-    required this.id,
+    this.id,
     required this.title,
     required this.amount,
     required this.category,
@@ -12,7 +12,7 @@ class Expense {
     required this.updatedAt,
   });
 
-  final String id;
+  final String? id;
   final String title;
   final double amount;
   final ExpenseCategory category;
