@@ -6,7 +6,7 @@ import 'package:expense_tracker/services/auth_service.dart';
 import 'package:expense_tracker/services/theme_preference_service.dart';
 import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
 import 'package:expense_tracker/viewmodels/theme_view_model.dart';
-import 'package:expense_tracker/views/expense_dashboard_screen/expense_dashboard_screen.dart';
+import 'package:expense_tracker/views/main/main_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -77,7 +77,7 @@ class ExpenseTrackerApp extends StatelessWidget {
                 theme: AppTheme.light,
                 darkTheme: AppTheme.dark,
                 themeMode: themeViewModel.themeMode,
-                home: const ExpenseDashboardScreen(),
+                home: const MainScreen(),
               );
             },
           ),
