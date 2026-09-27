@@ -2,6 +2,7 @@ import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/repositories/expense_repository.dart';
 import 'package:expense_tracker/viewmodels/expense_form_view_model.dart';
 import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
+import 'package:expense_tracker/viewmodels/theme_view_model.dart';
 import 'package:expense_tracker/views/expense_dashboard_screen/widgets/category_filter.dart';
 import 'package:expense_tracker/views/expense_dashboard_screen/widgets/dashboard_empty_state.dart';
 import 'package:expense_tracker/views/expense_dashboard_screen/widgets/dashboard_error_state.dart';
@@ -87,7 +88,22 @@ class ExpenseDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Expense Tracker')),
+      appBar: AppBar(
+        title: const Text('Expense Tracker'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              context.read<ThemeViewModel>().toggleTheme();
+            },
+            tooltip: 'Toggle theme',
+            icon: Icon(
+              Theme.of(context).brightness == Brightness.dark
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddExpense(context),
         icon: const Icon(Icons.add),
