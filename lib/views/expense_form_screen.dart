@@ -102,6 +102,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 ),
                 onSubmit: () {
                   Navigator.of(dialogContext).pop(true);
+                  return null;
                 },
               ),
             ],
