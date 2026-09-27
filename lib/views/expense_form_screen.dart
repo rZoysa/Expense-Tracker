@@ -258,9 +258,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                       suffixIcon: Icon(Icons.calendar_today_outlined),
                     ),
                     child: Text(
-                      MaterialLocalizations.of(
-                        context,
-                      ).formatMediumDate(viewModel.selectedDate),
+                      MaterialLocalizations.of(context)
+                          .formatMediumDate(viewModel.selectedDate),
                     ),
                   ),
                 ),

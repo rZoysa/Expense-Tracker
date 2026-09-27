@@ -17,9 +17,8 @@ class MonthSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final monthLabel = MaterialLocalizations.of(
-      context,
-    ).formatMonthYear(selectedMonth);
+    final monthLabel = MaterialLocalizations.of(context)
+        .formatMonthYear(selectedMonth);
 
     return Row(
       children: [
@@ -32,9 +31,8 @@ class MonthSelector extends StatelessWidget {
           child: Text(
             monthLabel,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
           ),
         ),
         IconButton(

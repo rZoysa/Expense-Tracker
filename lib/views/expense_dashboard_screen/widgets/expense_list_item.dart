@@ -18,9 +18,8 @@ class ExpenseListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final formattedDate = MaterialLocalizations.of(
-      context,
-    ).formatMediumDate(expense.date);
+    final formattedDate = MaterialLocalizations.of(context)
+        .formatMediumDate(expense.date);
 
     return ListTile(
       onTap: onTap,
@@ -44,9 +43,8 @@ class ExpenseListItem extends StatelessWidget {
       ),
       trailing: Text(
         CurrencyFormatter.formatLkr(expense.amount),
-        style: Theme.of(
-          context,
-        ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+        style: Theme.of(context).textTheme.bodyLarge
+            ?.copyWith(fontWeight: FontWeight.w600),
       ),
     );
   }
