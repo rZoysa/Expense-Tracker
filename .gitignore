@@ -46,3 +46,15 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Release signing / local secrets
+/android/key.properties
+**/*.jks
+**/*.keystore
+.env
+.env.*
+
+# Firebase CLI local state
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
