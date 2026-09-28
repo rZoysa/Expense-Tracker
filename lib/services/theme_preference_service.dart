@@ -1,7 +1,13 @@
 import 'package:expense_tracker/models/app_theme_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ThemePreferenceService {
+abstract interface class ThemePreferenceStore {
+  Future<AppThemeMode> loadThemeMode();
+
+  Future<void> saveThemeMode(AppThemeMode themeMode);
+}
+
+class ThemePreferenceService implements ThemePreferenceStore {
   ThemePreferenceService({SharedPreferencesAsync? preferences})
     : _preferences = preferences ?? SharedPreferencesAsync();
 
@@ -10,6 +16,7 @@ class ThemePreferenceService {
 
   final SharedPreferencesAsync _preferences;
 
+  @override
   Future<AppThemeMode> loadThemeMode() async {
     final savedThemeMode = await _preferences.getString(_themeModeKey);
 
@@ -37,6 +44,7 @@ class ThemePreferenceService {
     return AppThemeMode.system;
   }
 
+  @override
   Future<void> saveThemeMode(AppThemeMode themeMode) async {
     await _preferences.setString(_themeModeKey, themeMode.name);
   }

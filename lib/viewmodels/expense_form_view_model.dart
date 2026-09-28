@@ -88,14 +88,22 @@ class ExpenseFormViewModel extends ChangeNotifier {
           ? 'Unable to update the expense. Please try again.'
           : 'Unable to save the expense. Please try again.';
 
-      debugPrint('Failed to save expense: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      _logFormError('Failed to save expense', error, stackTrace);
 
       return false;
     } finally {
       _isSubmitting = false;
       notifyListeners();
     }
+  }
+
+  void _logFormError(String message, Object error, StackTrace stackTrace) {
+    if (!kDebugMode) {
+      return;
+    }
+
+    debugPrint('$message: $error');
+    debugPrintStack(stackTrace: stackTrace);
   }
 
   Future<bool> deleteExpense() async {
@@ -121,8 +129,7 @@ class ExpenseFormViewModel extends ChangeNotifier {
     } catch (error, stackTrace) {
       _errorMessage = 'Unable to delete the expense. Please try again.';
 
-      debugPrint('Failed to delete expense: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      _logFormError('Failed to delete expense', error, stackTrace);
 
       return false;
     } finally {

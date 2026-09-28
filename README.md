@@ -166,15 +166,16 @@ Create or select a Firebase project and enable:
 - **Authentication → Email/Password**
 - **Cloud Firestore**
 
-Log in and configure FlutterFire:
+Log in, select the Firebase project for this local checkout, and configure FlutterFire:
 
 ```bash
 firebase login
+firebase use --add
 dart pub global activate flutterfire_cli
 flutterfire configure
 ```
 
-This generates/updates `lib/firebase_options.dart` and platform Firebase configuration.
+`firebase use --add` creates a local `.firebaserc` project alias. This repository ignores that file because the submission repository is public. `flutterfire configure` generates/updates `lib/firebase_options.dart` and platform Firebase configuration.
 
 Deploy Firestore rules and indexes:
 

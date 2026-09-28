@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('ThemeViewModel', () {
     test('maps system preference to ThemeMode.system', () {
-      final preferenceService = _FakeThemePreferenceService();
+      final preferenceService = _FakeThemePreferenceStore();
       final viewModel = ThemeViewModel(
         themePreferenceService: preferenceService,
         initialThemeMode: AppThemeMode.system,
@@ -18,7 +18,7 @@ void main() {
     });
 
     test('updates and persists selected theme mode', () async {
-      final preferenceService = _FakeThemePreferenceService();
+      final preferenceService = _FakeThemePreferenceStore();
       final viewModel = ThemeViewModel(
         themePreferenceService: preferenceService,
         initialThemeMode: AppThemeMode.system,
@@ -33,7 +33,7 @@ void main() {
     });
 
     test('does not persist when selected mode has not changed', () async {
-      final preferenceService = _FakeThemePreferenceService();
+      final preferenceService = _FakeThemePreferenceStore();
       final viewModel = ThemeViewModel(
         themePreferenceService: preferenceService,
         initialThemeMode: AppThemeMode.light,
@@ -48,9 +48,12 @@ void main() {
   });
 }
 
-class _FakeThemePreferenceService extends ThemePreferenceService {
+class _FakeThemePreferenceStore implements ThemePreferenceStore {
   AppThemeMode? savedThemeMode;
   int saveCallCount = 0;
+
+  @override
+  Future<AppThemeMode> loadThemeMode() async => AppThemeMode.system;
 
   @override
   Future<void> saveThemeMode(AppThemeMode themeMode) async {

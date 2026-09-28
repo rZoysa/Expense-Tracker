@@ -18,7 +18,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // Keep the Firebase-registered application ID for the assessment build.
+        // Use a unique production ID and reconfigure Firebase before store release.
         applicationId = "com.example.expense_tracker"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -34,8 +35,8 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // The assessment APK uses debug signing for direct installation.
+            // Configure a private release key before any production/store release.
             signingConfig = signingConfigs.getByName("debug")
         }
     }

@@ -8,7 +8,7 @@ class ThemeViewModel extends ChangeNotifier {
     required AppThemeMode initialThemeMode,
   }) : _selectedThemeMode = initialThemeMode;
 
-  final ThemePreferenceService _themePreferenceService;
+  final ThemePreferenceStore _themePreferenceService;
 
   AppThemeMode _selectedThemeMode;
 

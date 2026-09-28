@@ -238,7 +238,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
 
                           final amount = double.tryParse(input);
 
-                          if (amount == null) {
+                          if (amount == null || !amount.isFinite) {
                             return 'Please enter a valid amount.';
                           }
 

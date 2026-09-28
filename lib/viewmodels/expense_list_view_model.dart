@@ -4,6 +4,7 @@ import 'package:expense_tracker/models/category_expense_summary.dart';
 import 'package:expense_tracker/models/expense_category.dart';
 import 'package:expense_tracker/models/expense_date_scope.dart';
 import 'package:expense_tracker/models/expense_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../models/expense.dart';
@@ -201,8 +202,11 @@ class ExpenseListViewModel extends ChangeNotifier {
             _isMonthLoading = false;
             _monthErrorMessage = 'Unable to load expenses.';
 
-            debugPrint('Failed to load monthly expenses: $error');
-            debugPrintStack(stackTrace: stackTrace);
+            _logExpenseError(
+              'Failed to load monthly expenses',
+              error,
+              stackTrace,
+            );
             notifyListeners();
           },
         );
@@ -229,8 +233,11 @@ class ExpenseListViewModel extends ChangeNotifier {
             _isDateLoading = false;
             _dateErrorMessage = 'Unable to load expenses for this date.';
 
-            debugPrint('Failed to load expenses for selected date: $error');
-            debugPrintStack(stackTrace: stackTrace);
+            _logExpenseError(
+              'Failed to load expenses for selected date',
+              error,
+              stackTrace,
+            );
             notifyListeners();
           },
         );
@@ -292,8 +299,7 @@ class ExpenseListViewModel extends ChangeNotifier {
 
       _allTimeErrorMessage = 'Unable to load older expenses.';
 
-      debugPrint('Failed to load paginated expenses: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      _logExpenseError('Failed to load paginated expenses', error, stackTrace);
     } finally {
       if (requestGeneration == _allTimeQueryGeneration) {
         _isAllTimeLoading = false;
@@ -320,8 +326,7 @@ class ExpenseListViewModel extends ChangeNotifier {
 
       return true;
     } catch (error, stackTrace) {
-      debugPrint('Failed to restore expense: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      _logExpenseError('Failed to restore expense', error, stackTrace);
 
       return false;
     }
@@ -403,15 +408,9 @@ class ExpenseListViewModel extends ChangeNotifier {
   }
 
   Future<void> retry() async {
-    if (_monthErrorMessage != null) {
-      _watchSelectedMonthExpenses();
-    }
-
     switch (_dateScope) {
       case ExpenseDateScope.month:
-        if (_monthErrorMessage == null) {
-          _watchSelectedMonthExpenses();
-        }
+        _watchSelectedMonthExpenses();
         break;
       case ExpenseDateScope.specificDate:
         _watchSelectedDateExpenses();
@@ -448,6 +447,15 @@ class ExpenseListViewModel extends ChangeNotifier {
 
     _selectedMonth = currentMonth;
     _watchSelectedMonthExpenses();
+  }
+
+  void _logExpenseError(String message, Object error, StackTrace stackTrace) {
+    if (!kDebugMode) {
+      return;
+    }
+
+    debugPrint('$message: $error');
+    debugPrintStack(stackTrace: stackTrace);
   }
 
   @override

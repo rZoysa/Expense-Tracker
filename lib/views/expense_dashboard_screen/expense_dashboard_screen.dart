@@ -1,3 +1,4 @@
+import 'package:expense_tracker/models/expense_form_result.dart';
 import 'package:expense_tracker/repositories/expense_repository.dart';
 import 'package:expense_tracker/viewmodels/expense_form_view_model.dart';
 import 'package:expense_tracker/viewmodels/expense_list_view_model.dart';
@@ -21,10 +22,10 @@ class ExpenseDashboardScreen extends StatelessWidget {
 
   final VoidCallback onViewAllTransactions;
 
-  void _openAddExpense(BuildContext context) {
+  Future<void> _openAddExpense(BuildContext context) async {
     final expenseRepository = context.read<ExpenseRepository>();
 
-    Navigator.of(context).push(
+    final result = await Navigator.of(context).push<ExpenseFormResult>(
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider(
           create: (_) =>
@@ -33,6 +34,12 @@ class ExpenseDashboardScreen extends StatelessWidget {
         ),
       ),
     );
+
+    if (!context.mounted || result?.wasSaved != true) {
+      return;
+    }
+
+    await context.read<ExpenseListViewModel>().refreshAllTime();
   }
 
   @override

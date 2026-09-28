@@ -8,6 +8,10 @@ class AuthViewModel extends ChangeNotifier {
   AuthViewModel({required this._authService}) {
     _user = _authService.currentUser;
     _userSubscription = _authService.userChanges.listen(_handleUserChanged);
+
+    if (_user == null) {
+      unawaited(ensureUserSession());
+    }
   }
 
   final AuthService _authService;
@@ -15,15 +19,12 @@ class AuthViewModel extends ChangeNotifier {
   StreamSubscription<User?>? _userSubscription;
   User? _user;
   bool _isProcessing = false;
+  bool _isInitializingSession = false;
   String? _errorMessage;
 
   User? get user => _user;
 
-  String? get userId => _user?.uid;
-
   String? get email => _user?.email;
-
-  bool get isSignedIn => _user != null;
 
   bool get isAnonymous => _user?.isAnonymous ?? true;
 
@@ -31,7 +32,39 @@ class AuthViewModel extends ChangeNotifier {
 
   bool get isProcessing => _isProcessing;
 
+  bool get isInitializingSession => _isInitializingSession;
+
   String? get errorMessage => _errorMessage;
+
+  Future<bool> ensureUserSession() async {
+    if (_user != null) {
+      return true;
+    }
+
+    if (_isInitializingSession) {
+      return false;
+    }
+
+    _isInitializingSession = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final user = await _authService.signInAnonymouslyIfNeeded();
+      _user = user;
+      return true;
+    } on FirebaseAuthException catch (error, stackTrace) {
+      _handleFirebaseAuthError(error, stackTrace);
+      return false;
+    } catch (error, stackTrace) {
+      _errorMessage = 'Unable to start your session. Please try again.';
+      _logAuthError(error, stackTrace);
+      return false;
+    } finally {
+      _isInitializingSession = false;
+      notifyListeners();
+    }
+  }
 
   Future<bool> createAccount({
     required String email,
@@ -96,8 +129,7 @@ class AuthViewModel extends ChangeNotifier {
     } catch (error, stackTrace) {
       _errorMessage = 'Unable to send the password reset email.';
 
-      debugPrint('Authentication operation failed: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      _logAuthError(error, stackTrace);
 
       return false;
     } finally {
@@ -134,8 +166,7 @@ class AuthViewModel extends ChangeNotifier {
     } catch (error, stackTrace) {
       _errorMessage = fallbackErrorMessage;
 
-      debugPrint('Authentication operation failed: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      _logAuthError(error, stackTrace);
 
       return false;
     } finally {
@@ -162,8 +193,7 @@ class AuthViewModel extends ChangeNotifier {
     } catch (error, stackTrace) {
       _errorMessage = fallbackErrorMessage;
 
-      debugPrint('Authentication operation failed: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      _logAuthError(error, stackTrace);
 
       return false;
     } finally {
@@ -188,8 +218,7 @@ class AuthViewModel extends ChangeNotifier {
   ) {
     _errorMessage = _messageForFirebaseAuthError(error);
 
-    debugPrint('Authentication operation failed: ${error.code}');
-    debugPrintStack(stackTrace: stackTrace);
+    _logAuthError(error.code, stackTrace);
   }
 
   String _messageForFirebaseAuthError(FirebaseAuthException error) {
@@ -214,8 +243,27 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   void _handleUserChanged(User? user) {
+    final hadNoUser = _user == null;
     _user = user;
+
+    if (user != null && hadNoUser) {
+      _errorMessage = null;
+    }
+
     notifyListeners();
+
+    if (user == null && !_isProcessing && !_isInitializingSession) {
+      unawaited(ensureUserSession());
+    }
+  }
+
+  void _logAuthError(Object error, StackTrace stackTrace) {
+    if (!kDebugMode) {
+      return;
+    }
+
+    debugPrint('Authentication operation failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
   }
 
   @override

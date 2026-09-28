@@ -356,6 +356,15 @@ void main() {
       expect(viewModel.errorMessage, 'Unable to load expenses.');
     });
 
+    test('monthly retry creates only one replacement listener', () async {
+      expect(repository.watchMonthCallCount, 1);
+
+      repository.emitWatchError(Exception('Firestore failed'));
+      await viewModel.retry();
+
+      expect(repository.watchMonthCallCount, 2);
+    });
+
     test('restores expense through repository', () async {
       final expense = _expense(
         id: 'expense-1',

@@ -18,7 +18,6 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final authService = AuthService();
-  await authService.signInAnonymouslyIfNeeded();
 
   final themePreferenceService = ThemePreferenceService();
   final initialThemeMode = await themePreferenceService.loadThemeMode();

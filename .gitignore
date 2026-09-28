@@ -53,3 +53,8 @@ app.*.map.json
 **/*.keystore
 .env
 .env.*
+
+# Firebase CLI local state
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log

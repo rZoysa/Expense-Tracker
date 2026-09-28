@@ -19,6 +19,7 @@ class FakeExpenseRepository implements ExpenseRepository {
 
   List<Expense> allTimeExpenses = [];
   int fetchPageCallCount = 0;
+  int watchMonthCallCount = 0;
 
   Object? addExpenseError;
   Object? updateExpenseError;
@@ -28,6 +29,7 @@ class FakeExpenseRepository implements ExpenseRepository {
 
   @override
   Stream<List<Expense>> watchExpensesForMonth(DateTime month) {
+    watchMonthCallCount++;
     return _monthExpensesController.stream;
   }
 
