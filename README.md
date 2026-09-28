@@ -4,24 +4,10 @@ A clean, responsive Flutter expense-tracking application built for the **CyphLab
 
 The app helps users record day-to-day expenses, review monthly spending, search and filter transaction history, and understand category-wise spending through a simple dashboard. Expenses are stored in Firebase Cloud Firestore, with optional account sign-in so users can access their expenses across devices.
 
-<!--
-Before submission, add the final public links here, for example:
-
 ## Demo
 
-- 🎥 Screen recording: <public Google Drive or unlisted YouTube URL>
-- 📱 Release APK: <public APK download URL>
-
-## Screenshots
-
-Recommended screenshots:
-- Dashboard
-- Transactions
-- Transaction Details
-- Add Expense
-- Profile / Settings
-- Dark Mode
--->
+- 🎥 Screen recording: [View demo](https://drive.google.com/file/d/1SrYYXu90zvZ8oUfPOuiWTyO-yKpGIJ44/view?usp=sharing)
+- 📱 Release APK: [Download APK](https://drive.google.com/file/d/1CBwQBQ_R2IVx4Sx3iRjHYHrQ12kWzqaf/view?usp=drive_link)
 
 ## Features
 
@@ -33,7 +19,7 @@ Recommended screenshots:
 - Select an expense category
 - Store expenses in **Firebase Cloud Firestore**
 - Display the total expenses for the selected/current month
-- Show a complete expense history
+- Show expense history with month, date, and all-time views
 - Filter expenses by category and date
 - Validate expense form input
 - Handle loading, empty, and error states
@@ -109,19 +95,19 @@ test/
 
 ## Technologies and packages
 
-| Technology / package | Purpose |
-| --- | --- |
-| Flutter / Dart | Mobile application framework and language |
-| `provider` | Dependency injection and ViewModel state exposure |
-| `firebase_core` | Firebase initialization |
-| `cloud_firestore` | Expense persistence, realtime queries, and pagination |
-| `firebase_auth` | Anonymous and email/password authentication |
-| `flutter_screenutil` | Responsive dimensions and spacing |
-| `fl_chart` | Category spending donut chart |
-| `skeletonizer` | Skeleton loading states |
-| `slide_to_act` | Slide-to-confirm destructive deletion |
-| `shared_preferences` | Persistent theme preference |
-| `intl` | Currency and date formatting |
+| Technology / package | Purpose                                               |
+| -------------------- | ----------------------------------------------------- |
+| Flutter / Dart       | Mobile application framework and language             |
+| `provider`           | Dependency injection and ViewModel state exposure     |
+| `firebase_core`      | Firebase initialization                               |
+| `cloud_firestore`    | Expense persistence, realtime queries, and pagination |
+| `firebase_auth`      | Anonymous and email/password authentication           |
+| `flutter_screenutil` | Responsive dimensions and spacing                     |
+| `fl_chart`           | Category spending donut chart                         |
+| `skeletonizer`       | Skeleton loading states                               |
+| `slide_to_act`       | Slide-to-confirm destructive deletion                 |
+| `shared_preferences` | Persistent theme preference                           |
+| `intl`               | Currency and date formatting                          |
 
 See `pubspec.yaml` for the exact versions used by this project.
 
@@ -141,7 +127,7 @@ flutter doctor
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone <https://github.com/rZoysa/Expense-Tracker.git>
 cd expense_tracker
 ```
 
@@ -276,8 +262,6 @@ For architecture-specific APKs:
 ```bash
 flutter build apk --split-per-abi
 ```
-
-For a production/store release, configure a unique application ID and a private production signing key. Signing keys and `android/key.properties` are intentionally excluded from version control.
 
 ## Known limitations
 
